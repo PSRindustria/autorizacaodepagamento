@@ -541,4 +541,3 @@ function mostrarToast(mensagem, tipo = "info") {
         setTimeout(() => toast.remove(), 500);
     }, 5000); // Toast visível por 5 segundos
 }
-
