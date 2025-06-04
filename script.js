@@ -1,543 +1,790 @@
 // Variáveis globais
+let pdfDoc = null;
 let formValidated = false;
-let itemCounter = 0; // Contador para IDs únicos de itens
 
 // Função para inicializar o formulário
 document.addEventListener("DOMContentLoaded", function () {
-    const generatePdfBtn = document.getElementById("generatePdfBtn");
-    if (generatePdfBtn) {
-        generatePdfBtn.addEventListener("click", validarEGerarPDF);
-    } else {
-        console.error("Botão Gerar PDF não encontrado!");
-    }
+  const hoje = new Date();
+  const dataFormatada = hoje.toISOString().split("T")[0];
+  document.getElementById("dataEmissao").value = dataFormatada;
 
-    const limparFormBtn = document.getElementById("limparFormBtn");
-    if (limparFormBtn) {
-        limparFormBtn.addEventListener("click", limparFormulario);
-    } else {
-        console.error("Botão Limpar Formulário não encontrado!");
-    }
+  atualizarDataLimite();
 
-    const addRowBtn = document.getElementById("addRowBtn");
-    if (addRowBtn) {
-        addRowBtn.addEventListener("click", adicionarLinhaTabela);
-    } else {
-        console.error("Botão Adicionar Item não encontrado!");
-    }
+  document.getElementById("gerarPdfBtn").addEventListener("click", validarEGerarPDF);
+  document.getElementById("closePdfPreview").addEventListener("click", fecharPreviewPDF);
+  document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
+  document.getElementById("limparFormBtn").addEventListener("click", limparFormulario);
+  document.getElementById("addRowBtn").addEventListener("click", adicionarLinhaTabela);
 
-    // Adiciona ouvintes para validação e atualização da barra de progresso
-    const camposValidaveis = document.querySelectorAll("#autorizacaoForm input, #autorizacaoForm textarea, #autorizacaoForm select");
-    camposValidaveis.forEach((campo) => {
-        campo.addEventListener("blur", function () {
-            validarCampo(this);
-            atualizarProgressoFormulario();
-        });
-        campo.addEventListener("input", function () {
-            // Remove erro ao digitar
-            const validationMsg = document.getElementById(`${this.id}-validation`);
-            if (validationMsg) validationMsg.textContent = "";
-            this.classList.remove("input-error");
+  document.getElementById("dataEmissao").addEventListener("change", atualizarDataLimite);
 
-            // Atualiza total da linha se for campo de valor/quantidade na tabela
-            if (this.closest("#itensTable tbody tr")) {
-                calcularTotalLinha(this.closest("tr"));
-            }
-            atualizarProgressoFormulario();
-        });
+  document.querySelectorAll("input[name=\"formaPagamento\"]").forEach((radio) => {
+    radio.addEventListener("change", atualizarCamposPagamento);
+  });
+
+  const camposValidaveis = document.querySelectorAll("input, textarea, select");
+  camposValidaveis.forEach((campo) => {
+    campo.addEventListener("blur", function () {
+      validarCampo(this);
+      atualizarProgressoFormulario();
     });
-
-    // Adiciona ouvinte para checkboxes de forma de pagamento
-    document.querySelectorAll("input[name='formaPagamento']").forEach((checkbox) => {
-        checkbox.addEventListener("change", atualizarProgressoFormulario);
+    campo.addEventListener("input", function () {
+      this.classList.remove("input-error");
+      atualizarProgressoFormulario();
     });
+  });
 
-    // Inicializa máscaras e adiciona a primeira linha da tabela
-    inicializarMascaras();
-    adicionarLinhaTabela(); // Garante que começa com uma linha
-    atualizarProgressoFormulario(); // Calcula progresso inicial
+  inicializarMascaras();
 
-    // Aplica máscara ao campo Total Geral (agora editável)
-    aplicarMascaraValor(document.getElementById("totalGeral"));
-
-    // Efeito de fade-in
-    document.querySelector(".form-container").classList.add("fade-in");
+  document.querySelector(".form-container").classList.add("fade-in");
 });
 
-// Aplica máscara de valor monetário (BRL)
+function atualizarDataLimite() {
+  try {
+    const dataEmissaoStr = document.getElementById("dataEmissao").value;
+    if (!dataEmissaoStr) return;
+    const dataEmissao = new Date(dataEmissaoStr + "T00:00:00");
+    if (isNaN(dataEmissao.getTime())) return;
+
+    const dataLimite = new Date(dataEmissao);
+    dataLimite.setDate(dataLimite.getDate() + 30);
+    const dataLimiteFormatada = dataLimite.toISOString().split("T")[0];
+    document.getElementById("dataLimitePrestacao").value = dataLimiteFormatada;
+  } catch (e) {
+    console.error("Erro ao atualizar data limite:", e);
+    document.getElementById("dataLimitePrestacao").value = "";
+  }
+}
+
+function atualizarCamposPagamento() {}
+
 function aplicarMascaraValor(input) {
-    if (!input) return;
-    Inputmask("currency", {
-        alias: "numeric",
-        groupSeparator: ".",
-        radixPoint: ",",
-        digits: 2,
-        autoGroup: true,
-        prefix: "", // Prefixo R$ é visual, não no valor
-        rightAlign: false,
-        placeholder: "0,00",
-        clearMaskOnLostFocus: false,
-        removeMaskOnSubmit: true, // Remove máscara ao coletar dados
-        unmaskAsNumber: true // Retorna como número
-    }).mask(input);
+  input.addEventListener("input", function (e) {
+    let valor = e.target.value.replace(/\D/g, "");
+    valor = (parseInt(valor, 10) / 100).toFixed(2) + "";
+    valor = valor.replace(".", ",");
+    valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+    e.target.value = valor === "NaN" || valor === "0,00" ? "" : valor;
+  });
 }
 
-// Aplica máscara de CNPJ
-function aplicarMascaraCnpj(input) {
-    if (!input) return;
-    Inputmask("99.999.999/9999-99", {
-        placeholder: "_",
-        clearMaskOnLostFocus: false
-    }).mask(input);
-}
-
-// Aplica máscara de CPF ou CNPJ
-function aplicarMascaraCpfCnpj(input) {
-    if (!input) return;
-    Inputmask(["999.999.999-99", "99.999.999/9999-99"], {
-        placeholder: "_",
-        clearMaskOnLostFocus: false,
-        keepStatic: true
-    }).mask(input);
-}
-
-// Inicializa todas as máscaras necessárias
 function inicializarMascaras() {
-    aplicarMascaraCnpj(document.getElementById("cnpjEmpresa"));
-    aplicarMascaraCpfCnpj(document.getElementById("cpfCnpjBeneficiario"));
-    // Máscaras para a tabela são aplicadas ao adicionar linha
+  // CNPJ e CPF/CNPJ - MANTÉM SUA LÓGICA ORIGINAL
+  const cnpjInput = document.getElementById("cnpjFornecedor");
+  if (cnpjInput) {
+    cnpjInput.addEventListener("input", function (e) {
+      let valor = e.target.value.replace(/\D/g, "");
+      valor = valor.substring(0, 14);
+      if (valor.length > 12) {
+        valor = valor.replace(
+          /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+          "$1.$2.$3/$4-$5"
+        );
+      } else if (valor.length > 8) {
+        valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, "$1.$2.$3/$4");
+      } else if (valor.length > 5) {
+        valor = valor.replace(/^(\d{2})(\d{3})(\d{0,3})/, "$1.$2.$3");
+      } else if (valor.length > 2) {
+        valor = valor.replace(/^(\d{2})(\d{0,3})/, "$1.$2");
+      }
+      e.target.value = valor;
+    });
+  }
+
+  const cpfCnpjInput = document.getElementById("cpfCnpj");
+  if (cpfCnpjInput) {
+    cpfCnpjInput.addEventListener("input", function (e) {
+      let valor = e.target.value.replace(/\D/g, "");
+      if (valor.length <= 11) {
+        valor = valor.substring(0, 11);
+        if (valor.length > 9) {
+          valor = valor.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, "$1.$2.$3-$4");
+        } else if (valor.length > 6) {
+          valor = valor.replace(/^(\d{3})(\d{3})(\d{0,3})$/, "$1.$2.$3");
+        } else if (valor.length > 3) {
+          valor = valor.replace(/^(\d{3})(\d{0,3})$/, "$1.$2");
+        }
+      } else {
+        valor = valor.substring(0, 14);
+        if (valor.length > 12) {
+          valor = valor.replace(
+            /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+            "$1.$2.$3/$4-$5"
+          );
+        } else if (valor.length > 8) {
+          valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, "$1.$2.$3/$4");
+        } else if (valor.length > 5) {
+          valor = valor.replace(/^(\d{2})(\d{3})(\d{0,3})/, "$1.$2.$3");
+        } else if (valor.length > 2) {
+          valor = valor.replace(/^(\d{2})(\d{0,3})/, "$1.$2");
+        }
+      }
+      e.target.value = valor;
+    });
+  }
+
+  // Campo principal de valor
+  const valorInput = document.getElementById("valor");
+  if (valorInput) {
+    aplicarMascaraValor(valorInput);
+  }
+
+  // Máscara nos campos de adiantamentos já existentes
+  document.querySelectorAll('.valor-adiantamento').forEach(aplicarMascaraValor);
 }
 
-// Valida um campo individualmente e retorna true se válido, false caso contrário
 function validarCampo(campo) {
-    if (!campo) return true; // Se o campo não existe, considera válido
-    const id = campo.id;
-    const valor = campo.value.trim();
-    const mensagemValidacao = document.getElementById(`${id}-validation`);
-    let valido = true;
+  const id = campo.id;
+  const valor = campo.value.trim();
+  const mensagemValidacao = document.getElementById(`${id}-validation`);
+  let valido = true;
 
-    campo.classList.remove("input-error", "input-success");
-    if (mensagemValidacao) mensagemValidacao.textContent = "";
+  campo.classList.remove("input-error", "input-success");
+  if (mensagemValidacao) mensagemValidacao.textContent = "";
 
-    // Lista de campos obrigatórios (ajustada para IDs corretos)
-    const obrigatorios = [
-        "cnpjEmpresa", "empresa", "emailSolicitante", "solicitante", "departamento",
-        "dataPagamento", "observacaoFinalidade",
-        "beneficiario", "cpfCnpjBeneficiario", "banco", "agencia", "conta", "tipoConta",
-        "totalGeral"
-    ];
+  const obrigatorios = [
+    "codigoFornecedor",
+    "fornecedor",
+    "cnpjFornecedor",
+    "dataEmissao",
+    "valor",
+    "solicitante",
+    "departamento",
+  ];
 
-    // Verifica campos obrigatórios
-    if (obrigatorios.includes(id) && !valor) {
-        if (mensagemValidacao) mensagemValidacao.textContent = "Campo obrigatório";
+  if (obrigatorios.includes(id) && !valor) {
+    if (mensagemValidacao) mensagemValidacao.textContent = "Campo obrigatório";
+    valido = false;
+  }
+
+  if (valido && id === "cnpjFornecedor" && !validarCNPJ(valor)) {
+    if (mensagemValidacao) mensagemValidacao.textContent = "CNPJ inválido";
+    valido = false;
+  }
+
+  if (valido && id === "valor") {
+    const valorNumerico = parseFloat(valor.replace(/\./g, "").replace(",", "."));
+    if (isNaN(valorNumerico) || valorNumerico <= 0) {
+        if (mensagemValidacao) mensagemValidacao.textContent = "Valor inválido";
         valido = false;
     }
+  }
 
-    // Validações específicas
-    if (valido && id === "cnpjEmpresa" && valor && !Inputmask.isValid(valor, { mask: "99.999.999/9999-99" })) {
-        if (mensagemValidacao) mensagemValidacao.textContent = "CNPJ inválido";
-        valido = false;
-    }
+  if (!valido) {
+    campo.classList.add("input-error");
+  } else if (valor) {
+    campo.classList.add("input-success");
+  }
 
-    if (valido && id === "cpfCnpjBeneficiario" && valor && !Inputmask.isValid(valor, { mask: ["999.999.999-99", "99.999.999/9999-99"] })) {
-        if (mensagemValidacao) mensagemValidacao.textContent = "CPF/CNPJ inválido";
-        valido = false;
-    }
-
-    if (valido && id === "emailSolicitante" && valor) {
-        const emailRegex = /^[^
-s@]+@[^
-s@]+\.[^
-s@]+$/;
-        if (!emailRegex.test(valor)) {
-            if (mensagemValidacao) mensagemValidacao.textContent = "E-mail inválido";
-            valido = false;
-        }
-    }
-
-    // Validação para campos da tabela (se necessário, adicionar aqui)
-    if (campo.closest("#itensTable tbody tr")) {
-        const row = campo.closest("tr");
-        const codigo = row.querySelector("input[name='codigoItem[]']").value.trim();
-        const descricao = row.querySelector("input[name='descricaoItem[]']").value.trim();
-        const quantidade = row.querySelector("input[name='quantidade[]']").value.trim();
-        const valorUnitario = row.querySelector("input[name='valorUnitario[]']").value.trim();
-
-        // Exemplo: tornar descrição e valor unitário obrigatórios se a linha foi iniciada
-        if ((codigo || descricao || quantidade || valorUnitario) && (!descricao || !valorUnitario || !quantidade)) {
-             if (mensagemValidacao && (id.includes('descricaoItem') || id.includes('valorUnitario') || id.includes('quantidade'))) {
-                 if (!valor) mensagemValidacao.textContent = "Obrigatório";
-             }
-             // Não marca como inválido globalmente, mas pode mostrar msg
-        }
-    }
-
-    // Validação da forma de pagamento (pelo menos uma selecionada)
-    if (id.startsWith("pgto")) { // Se a validação for acionada por um checkbox
-        const checkboxes = document.querySelectorAll("input[name='formaPagamento']:checked");
-        const msgFormaPgto = document.getElementById("formaPagamento-validation");
-        if (checkboxes.length === 0) {
-            if (msgFormaPgto) msgFormaPgto.textContent = "Selecione uma forma";
-            valido = false; // Considera inválido se nenhum estiver marcado
-        } else {
-            if (msgFormaPgto) msgFormaPgto.textContent = ""; // Limpa msg se válido
-        }
-    }
-
-
-    // Adiciona classe de erro/sucesso
-    if (!valido) {
-        campo.classList.add("input-error");
-    } else if (valor) { // Adiciona sucesso apenas se houver valor e for válido
-        campo.classList.add("input-success");
-    }
-
-    return valido;
+  return valido;
 }
 
-// Valida todo o formulário
+function validarCNPJ(cnpj) {
+  const numeros = cnpj.replace(/\D/g, "");
+  return numeros.length === 14;
+}
+
 function validarFormulario() {
-    let formValido = true;
-    const campos = document.querySelectorAll("#autorizacaoForm input, #autorizacaoForm textarea, #autorizacaoForm select");
-    campos.forEach((campo) => {
-        // Chama validarCampo para cada um, mas acumula o resultado
-        if (!validarCampo(campo)) {
-            formValido = false;
-        }
-    });
+  const camposValidaveis = document.querySelectorAll(
+    "#adiantamentoForm input:not([type=\"radio\"]), #adiantamentoForm textarea, #adiantamentoForm select"
+  );
+  let formValido = true;
 
-    // Valida se pelo menos uma forma de pagamento foi selecionada
-    const checkboxes = document.querySelectorAll("input[name='formaPagamento']:checked");
-    const msgFormaPgto = document.getElementById("formaPagamento-validation");
-    if (checkboxes.length === 0) {
-        if (msgFormaPgto) msgFormaPgto.textContent = "Selecione uma forma";
-        formValido = false;
-    } else {
-         if (msgFormaPgto) msgFormaPgto.textContent = "";
-    }
-
-    // Valida itens da tabela (pelo menos um item é obrigatório?) - Adapte conforme regra
-    const tableBody = document.getElementById("itensTable").querySelector("tbody");
-    const rows = tableBody.querySelectorAll("tr");
-    if (rows.length === 0) {
-        // Se nenhuma linha for adicionada, talvez não seja erro, depende da regra.
-        // Se for obrigatório ter itens:
-        // mostrarToast("Adicione pelo menos um item/serviço.", "error");
-        // formValido = false;
-    } else {
-        rows.forEach(row => {
-            const descricao = row.querySelector("input[name='descricaoItem[]']").value.trim();
-            const quantidade = row.querySelector("input[name='quantidade[]']").value.trim();
-            const valorUnitario = row.querySelector("input[name='valorUnitario[]']").value.trim();
-            if (!descricao || !quantidade || !valorUnitario) {
-                 // Marca os campos vazios como erro na linha específica
-                 if (!descricao) validarCampo(row.querySelector("input[name='descricaoItem[]']"));
-                 if (!quantidade) validarCampo(row.querySelector("input[name='quantidade[]']"));
-                 if (!valorUnitario) validarCampo(row.querySelector("input[name='valorUnitario[]']"));
-                 formValido = false; // Se qualquer linha iniciada tiver campos obrigatórios vazios
-            }
-        });
-    }
-
-
-    formValidated = formValido; // Atualiza estado global
-    return formValido;
-}
-
-// Adiciona uma nova linha à tabela de itens/serviços
-function adicionarLinhaTabela() {
-    itemCounter++;
-    const tableBody = document.getElementById("itensTable").querySelector("tbody");
-    const newRow = tableBody.insertRow();
-    newRow.innerHTML = `
-        <td><input type="text" name="codigoItem[]" id="codigoItem-${itemCounter}" class="input-animated"></td>
-        <td><input type="text" name="descricaoItem[]" id="descricaoItem-${itemCounter}" class="input-animated"></td>
-        <td><input type="number" name="quantidade[]" id="quantidade-${itemCounter}" class="input-animated" min="1" value="1"></td>
-        <td><input type="text" name="valorUnitario[]" id="valorUnitario-${itemCounter}" class="input-animated valor-monetario"></td>
-        <td><input type="text" name="valorTotalItem[]" id="valorTotalItem-${itemCounter}" class="input-animated valor-monetario" readonly></td>
-        <td><button type="button" class="remove-row-btn danger-button"><i class="fas fa-trash-alt"></i></button></td>
-    `;
-
-    // Aplica máscara aos campos de valor da nova linha
-    const valorUnitarioInput = newRow.querySelector("input[name='valorUnitario[]']");
-    const valorTotalInput = newRow.querySelector("input[name='valorTotalItem[]']");
-    aplicarMascaraValor(valorUnitarioInput);
-    aplicarMascaraValor(valorTotalInput); // Aplicar máscara, mesmo sendo readonly
-
-    // Adiciona ouvintes de evento para a nova linha
-    newRow.querySelectorAll("input").forEach(input => {
-        input.addEventListener("blur", function () {
-            validarCampo(this);
-            atualizarProgressoFormulario();
-        });
-        input.addEventListener("input", function () {
-             // Remove erro ao digitar
-            const validationMsg = document.getElementById(`${this.id}-validation`);
-            if (validationMsg) validationMsg.textContent = "";
-            this.classList.remove("input-error");
-
-            calcularTotalLinha(newRow);
-            atualizarProgressoFormulario();
-        });
-    });
-
-    // Adiciona ouvinte para o botão de remover linha
-    newRow.querySelector(".remove-row-btn").addEventListener("click", function () {
-        removerLinhaTabela(this);
-        atualizarProgressoFormulario();
-    });
-
-    // Foca no primeiro campo da nova linha
-    newRow.querySelector("input[name='codigoItem[]']").focus();
-    atualizarProgressoFormulario(); // Recalcula progresso
-}
-
-
-// Remove uma linha da tabela
-function removerLinhaTabela(button) {
-    const row = button.closest("tr");
-    row.remove();
-    // Não recalcula mais o total geral automaticamente
-    atualizarProgressoFormulario();
-}
-
-// Calcula o valor total de uma linha da tabela
-function calcularTotalLinha(row) {
-    const quantidadeInput = row.querySelector("input[name='quantidade[]']");
-    const valorUnitarioInput = row.querySelector("input[name='valorUnitario[]']");
-    const valorTotalInput = row.querySelector("input[name='valorTotalItem[]']");
-
-    const quantidade = parseFloat(quantidadeInput.value) || 0;
-    // Usa inputmask para obter o valor numérico desmascarado
-    const valorUnitario = Inputmask.unmask(valorUnitarioInput.value, { alias: 'currency', unmaskAsNumber: true }) || 0;
-
-    const valorTotal = quantidade * valorUnitario;
-
-    // Usa inputmask para formatar e definir o valor total
-    Inputmask.setValue(valorTotalInput, valorTotal.toFixed(2));
-}
-
-
-// Atualiza a barra de progresso do formulário
-function atualizarProgressoFormulario() {
-    const campos = document.querySelectorAll("#autorizacaoForm input, #autorizacaoForm textarea, #autorizacaoForm select");
-    const camposObrigatorios = [
-        "cnpjEmpresa", "empresa", "emailSolicitante", "solicitante", "departamento",
-        "dataPagamento", "observacaoFinalidade",
-        "beneficiario", "cpfCnpjBeneficiario", "banco", "agencia", "conta", "tipoConta",
-        "totalGeral"
+  camposValidaveis.forEach((campo) => {
+    const obrigatorios = [
+      "codigoFornecedor",
+      "fornecedor",
+      "cnpjFornecedor",
+      "dataEmissao",
+      "valor",
+      "solicitante",
+      "departamento",
     ];
-    let camposPreenchidos = 0;
-    let totalCamposObrigatorios = camposObrigatorios.length;
-
-    // Contagem de campos obrigatórios preenchidos
-    camposObrigatorios.forEach(id => {
-        const campo = document.getElementById(id);
-        if (campo && campo.value.trim() !== "") {
-            // Validação específica para select
-            if (campo.tagName === "SELECT" && campo.value === "") {
-                 // Não conta se for select e a opção vazia estiver selecionada
-            } else {
-                camposPreenchidos++;
-            }
-        }
-    });
-
-    // Verifica forma de pagamento
-    const checkboxes = document.querySelectorAll("input[name='formaPagamento']:checked");
-    totalCamposObrigatorios++; // Conta como 1 campo obrigatório
-    if (checkboxes.length > 0) {
-        camposPreenchidos++;
-    }
-
-    // Verifica itens da tabela (considera 1 item como obrigatório para progresso)
-    const tableBody = document.getElementById("itensTable").querySelector("tbody");
-    const tableRows = tableBody.rows.length;
-    totalCamposObrigatorios++; // Conta a tabela como 1 campo obrigatório
-    if (tableRows > 0) {
-         // Verifica se a primeira linha tem dados essenciais
-         const firstRow = tableBody.rows[0];
-         const desc = firstRow.querySelector("input[name='descricaoItem[]']").value.trim();
-         const qtd = firstRow.querySelector("input[name='quantidade[]']").value.trim();
-         const val = firstRow.querySelector("input[name='valorUnitario[]']").value.trim();
-         if (desc && qtd && val) {
-            camposPreenchidos++;
+    if (obrigatorios.includes(campo.id) || campo.value.trim() !== "") {
+         if (!validarCampo(campo)) {
+            formValido = false;
          }
     }
+  });
 
+  const formaPagamento = document.querySelector(
+    "input[name=\"formaPagamento\"]:checked"
+  );
+  const validacaoFormaPagamento = document.getElementById(
+    "formaPagamento-validation"
+  );
+  if (!formaPagamento) {
+    if (validacaoFormaPagamento) validacaoFormaPagamento.textContent = "Selecione uma forma de pagamento";
+    formValido = false;
+  } else {
+    if (validacaoFormaPagamento) validacaoFormaPagamento.textContent = "";
+  }
 
-    const progresso = totalCamposObrigatorios > 0 ? (camposPreenchidos / totalCamposObrigatorios) * 100 : 0;
-    const progressBar = document.getElementById("formProgress");
-    progressBar.style.width = `${progresso}%`;
-    progressBar.textContent = `${Math.round(progresso)}%`; // Mostra percentual
+  return formValido;
 }
 
-// Limpa o formulário
+function atualizarProgressoFormulario() {
+  const camposObrigatorios = [
+    "codigoFornecedor",
+    "fornecedor",
+    "cnpjFornecedor",
+    "dataEmissao",
+    "valor",
+    "solicitante",
+    "departamento",
+  ];
+  let preenchidos = 0;
+  const totalObrigatorios = camposObrigatorios.length + 1;
+
+  camposObrigatorios.forEach(id => {
+      const campo = document.getElementById(id);
+      if(campo && campo.value.trim() !== "") {
+          preenchidos++;
+      }
+  });
+
+  if (document.querySelector("input[name=\"formaPagamento\"]:checked")) {
+      preenchidos++;
+  }
+
+  const progresso = (preenchidos / totalObrigatorios) * 100;
+  document.getElementById("formProgress").style.width = `${Math.min(
+    progresso,
+    100
+  )}%`;
+}
+
+function adicionarLinhaTabela() {
+  const tbody = document.querySelector("#adiantamentosTable tbody");
+  if (tbody.rows.length >= 10) {
+      mostrarToast("Máximo de 10 linhas de adiantamento atingido.", "warning");
+      return;
+  }
+  const novaLinha = document.createElement("tr");
+
+  novaLinha.innerHTML = `
+        <td><input type="text" name="adiantamentoOC[]" class="input-animated"></td>
+        <td><input type="date" name="adiantamentoData[]" class="input-animated"></td>
+        <td>
+            <div class="input-prefix">
+                <span>R$</span>
+                <input type="text" name="adiantamentoValor[]" class="input-animated valor-adiantamento" placeholder="0,00">
+            </div>
+        </td>
+    `;
+
+  tbody.appendChild(novaLinha);
+  novaLinha.classList.add("fade-in");
+  mostrarToast("Nova linha adicionada", "success");
+
+  // Inicializa máscara no novo campo
+  novaLinha.querySelectorAll('.valor-adiantamento').forEach(aplicarMascaraValor);
+}
+
 function limparFormulario() {
-    const form = document.getElementById("autorizacaoForm");
-    form.reset(); // Reseta campos padrão
+  document.getElementById("adiantamentoForm").reset();
 
-    // Limpa tabela, exceto cabeçalho
-    const tableBody = document.getElementById("itensTable").querySelector("tbody");
-    tableBody.innerHTML = "";
-    adicionarLinhaTabela(); // Adiciona uma linha inicial limpa
+  const hoje = new Date();
+  const dataFormatada = hoje.toISOString().split("T")[0];
+  document.getElementById("dataEmissao").value = dataFormatada;
+  atualizarDataLimite();
 
-    // Limpa mensagens de validação e classes de erro/sucesso
-    document.querySelectorAll(".validation-message").forEach(msg => msg.textContent = "");
-    document.querySelectorAll(".input-error, .input-success").forEach(el => el.classList.remove("input-error", "input-success"));
+  document.querySelectorAll(".validation-message").forEach((msg) => {
+    msg.textContent = "";
+  });
 
-    // Reseta a barra de progresso
-    atualizarProgressoFormulario();
-    mostrarToast("Formulário limpo!", "info");
+  document.querySelectorAll(".input-error, .input-success").forEach((campo) => {
+    campo.classList.remove("input-error", "input-success");
+  });
+
+  document.getElementById("formProgress").style.width = "0%";
+  mostrarToast("Formulário limpo com sucesso", "success");
 }
 
-// Coleta os dados do formulário em formato JSON
-function coletarDadosFormulario() {
-    const form = document.getElementById("autorizacaoForm");
-    const formData = new FormData(form);
-    const data = {};
+function mostrarToast(mensagem, tipo = "success") {
+  const toastContainer = document.getElementById("toastContainer");
+  if (!toastContainer) {
+      console.warn("Elemento #toastContainer não encontrado para exibir a notificação.");
+      alert(mensagem);
+      return;
+  }
 
-    // Coleta campos normais
-    formData.forEach((value, key) => {
-        // Tratamento especial para checkboxes de forma de pagamento
-        if (key === "formaPagamento") {
-            if (!data[key]) {
-                data[key] = [];
-            }
-            data[key].push(value);
-        } else if (key.endsWith("[]")) {
-            // Ignora campos de array aqui, serão tratados separadamente
-        } else {
-             // Remove máscara de valores monetários antes de adicionar ao JSON
-             const inputElement = form.querySelector(`[name="${key}"]`);
-             if (inputElement && (inputElement.classList.contains('valor-monetario') || key === 'totalGeral')) { // Inclui totalGeral
-                 data[key] = Inputmask.unmask(value, { alias: 'currency', unmaskAsNumber: true }) || 0;
-             } else {
-                 data[key] = value;
-             }
+  const toast = document.createElement("div");
+  toast.className = `toast ${tipo}`;
+
+  const iconClass = {
+      success: "fa-check-circle",
+      error: "fa-exclamation-circle",
+      warning: "fa-exclamation-triangle",
+      info: "fa-info-circle"
+  }[tipo] || "fa-info-circle";
+
+  toast.innerHTML = `
+      <i class="fas ${iconClass} toast-icon"></i>
+      <span class="toast-message">${mensagem}</span>
+      <div class="toast-progress"></div>
+  `;
+
+  toastContainer.appendChild(toast);
+  toast.offsetHeight;
+  toast.classList.add("show");
+
+  const progressElement = toast.querySelector(".toast-progress");
+  setTimeout(() => {
+      if(progressElement) progressElement.style.width = "100%";
+  }, 100);
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+    toast.addEventListener("transitionend", () => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
         }
     });
-
-     // Coleta dados da tabela
-    data.itens = [];
-    const tableBody = document.getElementById("itensTable").querySelector("tbody");
-    const rows = tableBody.querySelectorAll("tr");
-    rows.forEach(row => {
-        const item = {
-            codigo: row.querySelector("input[name='codigoItem[]']").value,
-            descricao: row.querySelector("input[name='descricaoItem[]']").value,
-            quantidade: parseInt(row.querySelector("input[name='quantidade[]']").value) || 0,
-            // Remove máscara dos valores da tabela
-            valorUnitario: Inputmask.unmask(row.querySelector("input[name='valorUnitario[]']").value, { alias: 'currency', unmaskAsNumber: true }) || 0,
-            valorTotal: Inputmask.unmask(row.querySelector("input[name='valorTotalItem[]']").value, { alias: 'currency', unmaskAsNumber: true }) || 0
-        };
-         // Adiciona item apenas se tiver descrição ou código (evita linhas vazias)
-        if (item.codigo || item.descricao) {
-            data.itens.push(item);
-        }
-    });
-
-    // Garante que o total geral seja numérico (já tratado no loop forEach)
-    // data.totalGeral = Inputmask.unmask(document.getElementById("totalGeral").value, { alias: 'currency', unmaskAsNumber: true }) || 0;
-
-
-    return data;
+  }, 3000);
 }
 
-
-// Função principal para validar e gerar o PDF
-async function validarEGerarPDF() {
-    if (!validarFormulario()) {
-        mostrarToast("Por favor, corrija os campos inválidos.", "error");
-        // Foca no primeiro campo com erro
-        const firstError = document.querySelector(".input-error");
-        if (firstError) {
-            firstError.focus();
-        }
-        return;
+function validarEGerarPDF() {
+  if (validarFormulario()) {
+    gerarPDF();
+    formValidated = true;
+  } else {
+    mostrarToast("Por favor, corrija os erros no formulário", "error");
+    const primeiroErro = document.querySelector(".input-error");
+    if (primeiroErro) {
+      primeiroErro.scrollIntoView({ behavior: "smooth", block: "center" });
     }
+  }
+}
 
-    const dados = coletarDadosFormulario();
+function formatarMoeda(valor) {
+  if (valor === null || valor === undefined || valor === "") return "R$ 0,00";
+  const numero = parseFloat(String(valor).replace(/\./g, "").replace(",", "."));
+  if (isNaN(numero)) return "R$ 0,00";
+  return numero.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
 
-    // Mostra um feedback visual de carregamento
-    const btn = document.getElementById("generatePdfBtn");
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
-    btn.disabled = true;
+function formatarData(dataStr) {
+  if (!dataStr) return "__/__/____";
+  try {
+    const data = new Date(dataStr + "T00:00:00");
+    if (isNaN(data.getTime())) return "__/__/____";
+    const dia = String(data.getDate()).padStart(2, "0");
+    const mes = String(data.getMonth() + 1).padStart(2, "0");
+    const ano = data.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+  } catch (e) {
+    console.error("Erro ao formatar data:", e);
+    return "__/__/____";
+  }
+}
 
-    try {
-        // Envia os dados para o backend Flask
-        const response = await fetch("/generate_pdf", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(dados),
+function loadImageAsBase64(url) {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.setAttribute('crossOrigin', 'anonymous');
+    img.onload = function () {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      resolve(dataURL);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// =============== GERADOR PDF COMPLETO ===============
+async function gerarPDF() {
+  mostrarToast("Gerando PDF...", "info");
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  // --- Coleta dos Dados ---
+  const dados = {
+    codigoFornecedor: document.getElementById("codigoFornecedor").value,
+    finalidade: document.getElementById("finalidade").value,
+    fornecedor: document.getElementById("fornecedor").value,
+    cnpjFornecedor: document.getElementById("cnpjFornecedor").value,
+    dataEmissao: document.getElementById("dataEmissao").value,
+    dataPagamento: document.getElementById("dataPagamento").value,
+    ordemCompra: document.getElementById("ordemCompra").value,
+    valor: document.getElementById("valor").value,
+    formaPagamento: document.querySelector("input[name=\"formaPagamento\"]:checked")?.value || "",
+    beneficiario: document.getElementById("beneficiario").value,
+    cpfCnpj: document.getElementById("cpfCnpj").value,
+    banco: document.getElementById("banco").value,
+    solicitante: document.getElementById("solicitante").value,
+    agencia: document.getElementById("agencia").value,
+    conta: document.getElementById("conta").value,
+    departamento: document.getElementById("departamento").value,
+    tipoConta: document.getElementById("tipoConta").value,
+    chavePix: document.getElementById("chavePix").value,
+    dataLimitePrestacao: document.getElementById("dataLimitePrestacao").value,
+    adiantamentos: [],
+  };
+
+  const linhasTabela = document.querySelectorAll("#adiantamentosTable tbody tr");
+  linhasTabela.forEach((linha) => {
+    const ocInput = linha.querySelector("input[name=\"adiantamentoOC[]\"]");
+    const dataInput = linha.querySelector("input[name=\"adiantamentoData[]\"]");
+    const valorInput = linha.querySelector("input[name=\"adiantamentoValor[]\"]");
+    const oc = ocInput ? ocInput.value : "";
+    const data = dataInput ? dataInput.value : "";
+    const valorRaw = valorInput ? valorInput.value : "";
+    if (oc || data || valorRaw) {
+        const valorFormatado = formatarMoeda(valorRaw);
+        dados.adiantamentos.push({
+            ordemCompra: oc,
+            dataLimite: data,
+            valor: valorFormatado
         });
-
-        if (!response.ok) {
-            // Tenta ler a mensagem de erro do backend, se houver
-            let errorMsg = `Erro ${response.status}: ${response.statusText}`;
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.error || errorMsg;
-            } catch (e) {
-                // Ignora se não conseguir parsear o JSON do erro
-            }
-            throw new Error(errorMsg);
-        }
-
-        // Recebe o PDF como blob
-        const blob = await response.blob();
-
-        // Cria um link temporário para download
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.style.display = "none";
-        a.href = url;
-        // Define o nome do arquivo PDF
-        const dataFormatada = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-        a.download = `Autorizacao_Pagamento_${dados.empresa || 'Empresa'}_${dataFormatada}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-
-        // Limpa o URL do objeto
-        window.URL.revokeObjectURL(url);
-        a.remove();
-
-        mostrarToast("PDF gerado com sucesso!", "success");
-
-    } catch (error) {
-        console.error("Erro ao gerar PDF:", error);
-        mostrarToast(`Erro ao gerar PDF: ${error.message}`, "error");
-    } finally {
-        // Restaura o botão
-        btn.innerHTML = originalText;
-        btn.disabled = false;
     }
+  });
+
+  // === CABEÇALHO AJUSTADO ===
+  const margin = 10;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const contentWidth = pageWidth - 2 * margin;
+  let currentY = margin;
+
+  // Logo centralizada
+  const logoUrl = "https://i.postimg.cc/v8nRpXB7/logo.png";
+  const logoWidth = 175;  // ajuste se preferir menor
+  const logoHeight = 16;
+  const logoX = pageWidth - margin - logoWidth;
+  const logoY = currentY;
+  const logoBase64 = await loadImageAsBase64(logoUrl);
+  doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight);
+  currentY += logoHeight + 5;
+
+  // Título + Caixa de Versão
+  const tituloY = currentY + 7;
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("FORMULÁRIO DE ADIANTAMENTO À FORNECEDOR", pageWidth / 2, tituloY, { align: "center" });
+  doc.setFont("helvetica", "normal");
+
+  const boxWidth = 40;
+  const boxHeight = 10;
+  const boxX = pageWidth - margin - boxWidth;
+  const boxY = tituloY - 7;
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(0);
+  doc.rect(boxX, boxY, boxWidth, boxHeight);
+  doc.setFontSize(8);
+  doc.text("FOR_FIN_02_02", boxX + boxWidth / 2, boxY + 4, { align: "center" });
+  doc.text("VERSÃO: 01", boxX + boxWidth / 2, boxY + 8, { align: "center" });
+
+  currentY = boxY + boxHeight + 7;
+
+  // Linha horizontal
+  doc.setLineWidth(0.5);
+  doc.line(margin, currentY, pageWidth - margin, currentY);
+  currentY += 8;
+
+  // === CAMPOS ESTRUTURADOS (layout 2 colunas) ===
+
+  const col1X = margin;
+  const colWidth = contentWidth * 0.55;
+  const col2X = margin + colWidth + 5;
+  const col2Width = contentWidth - colWidth - 5;
+  const fieldHeight = 7;
+  const labelOffset = 2;
+  const valueOffsetY = 5;
+  const lineOffset = 0.5;
+  let yCol1 = currentY;
+  let yCol2 = currentY;
+
+  doc.setFontSize(8);
+
+  function drawField(x, y, w, label, value) {
+    doc.setFont("helvetica", "bold");
+    doc.text(label, x, y + labelOffset);
+    doc.setFont("helvetica", "normal");
+    doc.setLineWidth(0.2);
+    doc.line(x, y + fieldHeight - lineOffset, x + w, y + fieldHeight - lineOffset);
+    if (value) {
+      doc.text(String(value), x + 2, y + valueOffsetY);
+    }
+    return y + fieldHeight + 3;
+  }
+
+  function drawBoxField(x, y, w, h, label, value, maxLines = 1) {
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text(label, x, y - 2);
+      doc.setFont("helvetica", "normal");
+      doc.rect(x, y, w, h);
+      if (value) {
+          const lines = doc.splitTextToSize(String(value), w - 4);
+          doc.text(lines.slice(0, maxLines), x + 2, y + 4);
+      }
+      return y + h + 5;
+  }
+
+  yCol1 = drawField(col1X, yCol1, colWidth, "CÓDIGO FORNECEDOR:", dados.codigoFornecedor);
+  yCol1 = drawField(col1X, yCol1, colWidth, "FORNECEDOR:", dados.fornecedor);
+  yCol1 = drawField(col1X, yCol1, colWidth, "CNPJ FORNECEDOR:", dados.cnpjFornecedor);
+  yCol1 = drawField(col1X, yCol1, colWidth, "DATA DE EMISSÃO:", formatarData(dados.dataEmissao));
+  yCol1 = drawField(col1X, yCol1, colWidth, "DATA PARA PAGAMENTO:", formatarData(dados.dataPagamento));
+  yCol1 = drawField(col1X, yCol1, colWidth, "ORDEM DE COMPRA:", dados.ordemCompra);
+
+  // Campo Valor (com R$)
+  doc.setFont("helvetica", "bold");
+  doc.text("VALOR:", col1X, yCol1 + labelOffset);
+  doc.setFont("helvetica", "normal");
+  doc.line(col1X, yCol1 + fieldHeight - lineOffset, col1X + colWidth, yCol1 + fieldHeight - lineOffset);
+  doc.text("R$", col1X + 2, yCol1 + valueOffsetY);
+  doc.text(formatarMoeda(dados.valor).replace("R$","").trim(), col1X + 8, yCol1 + valueOffsetY);
+  yCol1 += fieldHeight + 3;
+
+  // Forma de Pagamento
+  doc.setFont("helvetica", "bold");
+  doc.text("FORMA DE PAGAMENTO:", col1X, yCol1 + labelOffset);
+  doc.setFont("helvetica", "normal");
+  const checkX1 = col1X + 45;
+  const checkY = yCol1 - 1;
+  const checkSize = 4;
+  doc.rect(checkX1, checkY, checkSize, checkSize);
+  doc.text("PIX/TED", checkX1 + checkSize + 2, checkY + checkSize - 1);
+  const checkX2 = checkX1 + 30;
+  doc.rect(checkX2, checkY, checkSize, checkSize);
+  doc.text("BOLETO", checkX2 + checkSize + 2, checkY + checkSize - 1);
+  if (dados.formaPagamento === "PIX/TED") {
+  doc.setFont("helvetica", "bold");
+  doc.text("X", checkX1 + 1.4, checkY + checkSize - 0.8);
+  doc.setFont("helvetica", "normal");
+} else if (dados.formaPagamento === "BOLETO") {
+  doc.setFont("helvetica", "bold");
+  doc.text("X", checkX2 + 1.4, checkY + checkSize - 0.8);
+  doc.setFont("helvetica", "normal");
+}
+  yCol1 += fieldHeight + 3;
+
+  yCol1 = drawField(col1X, yCol1, colWidth, "SOLICITANTE:", dados.solicitante);
+  yCol1 = drawField(col1X, yCol1, colWidth, "DEPARTAMENTO:", dados.departamento);
+  yCol1 = drawField(col1X, yCol1, colWidth, "DATA LIMITE PARA PRESTAÇÃO DE CONTAS:", formatarData(dados.dataLimitePrestacao));
+
+  // Coluna 2
+  const finalidadeHeight = 30;
+  yCol2 = drawBoxField(col2X, yCol2, col2Width, finalidadeHeight, "FINALIDADE:", dados.finalidade, 5);
+
+  // Caixa Dados para Pagamento
+  const dadosPgtoY = yCol2;
+  const dadosPgtoHeight = 45;
+  doc.rect(col2X, dadosPgtoY, col2Width, dadosPgtoHeight);
+  doc.setFont("helvetica", "bold");
+  doc.text("DADOS PARA PAGAMENTO:", col2X + 2, dadosPgtoY + 4);
+  doc.setFont("helvetica", "normal");
+  let yDados = dadosPgtoY + 8;
+  const fieldWidthDados = col2Width - 4;
+  const labelIndentDados = col2X + 2;
+  const valueIndentDados = col2X + 25;
+
+  function drawDadosField(y, label, value) {
+      doc.setFontSize(7);
+      doc.text(label, labelIndentDados, y + 3);
+      doc.line(valueIndentDados - 2, y + 4, col2X + col2Width - 2, y + 4);
+      if(value) doc.text(String(value), valueIndentDados, y + 3);
+      return y + 5;
+  }
+
+  yDados = drawDadosField(yDados, "BENEFICIÁRIO:", dados.beneficiario);
+  yDados = drawDadosField(yDados, "CPF / CNPJ:", dados.cpfCnpj);
+  yDados = drawDadosField(yDados, "BANCO:", dados.banco);
+  yDados = drawDadosField(yDados, "AGÊNCIA:", dados.agencia);
+  yDados = drawDadosField(yDados, "CONTA:", dados.conta);
+  yDados = drawDadosField(yDados, "TIPO DE CONTA:", dados.tipoConta);
+  yDados = drawDadosField(yDados, "CHAVE PIX:", dados.chavePix);
+  yCol2 = dadosPgtoY + dadosPgtoHeight + 5;
+
+  // --- Seção Adiantamentos em Aberto ---
+  currentY = Math.max(yCol1, yCol2) + 5;
+  doc.setLineWidth(0.5);
+  doc.line(margin, currentY, pageWidth - margin, currentY);
+  currentY += 5;
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("ADIANTAMENTOS EM ABERTO", pageWidth / 2, currentY, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  currentY += 8;
+
+  // Tabela Adiantamentos
+  const tableColWidths = [contentWidth * 0.4, contentWidth * 0.4, contentWidth * 0.2];
+  const tableHeaders = ["ORDEM DE COMPRA", "DATA LIMITE PRESTAÇÃO DE CONTAS", "VALOR EM ABERTO"];
+  const tableRowHeight = 6;
+  const tableHeaderY = currentY;
+  let tableX = margin;
+
+  // Cabeçalho
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "bold");
+  for (let i = 0; i < tableHeaders.length; i++) {
+    doc.rect(tableX, tableHeaderY, tableColWidths[i], tableRowHeight);
+    doc.text(tableHeaders[i], tableX + 2, tableHeaderY + 4);
+    tableX += tableColWidths[i];
+  }
+  currentY += tableRowHeight;
+
+  // Linhas da Tabela (mínimo 4 linhas)
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  const numRowsToDraw = Math.max(4, dados.adiantamentos.length);
+  for (let i = 0; i < numRowsToDraw; i++) {
+    tableX = margin;
+    const adiantamento = dados.adiantamentos[i];
+    for (let j = 0; j < tableColWidths.length; j++) {
+      doc.rect(tableX, currentY, tableColWidths[j], tableRowHeight);
+      let cellValue = "";
+      if (adiantamento) {
+          if (j === 0) cellValue = adiantamento.ordemCompra;
+          else if (j === 1) cellValue = formatarData(adiantamento.dataLimite);
+          else if (j === 2) cellValue = adiantamento.valor;
+      }
+      doc.text(String(cellValue), tableX + 2, currentY + 4);
+      tableX += tableColWidths[j];
+    }
+    currentY += tableRowHeight;
+  }
+
+  // --- Assinaturas ---
+  currentY += 15;
+  const signatureY = Math.min(currentY, doc.internal.pageSize.getHeight() - 30);
+  const signatureLineLength = 60;
+  const signatureCol1X = margin + contentWidth * 0.15;
+  const signatureCol2X = pageWidth - margin - contentWidth * 0.15 - signatureLineLength;
+
+  doc.setLineWidth(0.3);
+  doc.line(signatureCol1X, signatureY, signatureCol1X + signatureLineLength, signatureY);
+  doc.text("Solicitante", signatureCol1X + signatureLineLength / 2, signatureY + 4, { align: "center" });
+  doc.line(signatureCol2X, signatureY, signatureCol2X + signatureLineLength, signatureY);
+  doc.text("Controladoria", signatureCol2X + signatureLineLength / 2, signatureY + 4, { align: "center" });
+
+  // --- Finalização ---
+  pdfDoc = doc;
+
+  try {
+      const pdfData = doc.output("datauristring");
+      const pdfContainer = document.getElementById("pdfContainer");
+      if (pdfContainer) {
+          pdfContainer.innerHTML = `<embed width="100%" height="100%" src="${pdfData}" type="application/pdf">`;
+          document.getElementById("pdfPreview").classList.add("active");
+          mostrarToast("PDF gerado com sucesso!", "success");
+      } else {
+          console.error("Elemento #pdfContainer não encontrado.");
+          mostrarToast("Erro ao exibir preview do PDF.", "error");
+          downloadPDF();
+      }
+  } catch (e) {
+      console.error("Erro ao gerar Data URI do PDF:", e);
+      mostrarToast("Erro ao gerar preview do PDF.", "error");
+  }
 }
 
+// Fechar preview
+function fecharPreviewPDF() {
+  document.getElementById("pdfPreview").classList.remove("active");
+  const pdfContainer = document.getElementById("pdfContainer");
+  if(pdfContainer) pdfContainer.innerHTML = "";
+}
 
-// Função para exibir toasts (notificações)
-function mostrarToast(mensagem, tipo = "info") {
-    const toastContainer = document.getElementById("toastContainer");
-    const toast = document.createElement("div");
-    toast.className = `toast toast-${tipo}`; // info, success, error, warning
+// Download PDF
+function downloadPDF() {
+  if (pdfDoc) {
+    const fornecedor = document.getElementById("fornecedor").value || "fornecedor";
+    const dataEmissao = document.getElementById("dataEmissao").value || new Date().toISOString().split("T")[0];
+    const fornecedorLimpo = fornecedor.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const nomeArquivo = `Adiantamento_${fornecedorLimpo}_${dataEmissao}.pdf`;
+    try {
+        pdfDoc.save(nomeArquivo);
+        mostrarToast("PDF baixado com sucesso!", "success");
+    } catch (e) {
+        console.error("Erro ao salvar PDF:", e);
+        mostrarToast("Erro ao baixar o PDF.", "error");
+    }
+  } else {
+      mostrarToast("Nenhum PDF gerado para baixar.", "warning");
+  }
+}
 
-    let iconClass = "fas fa-info-circle";
-    if (tipo === "success") iconClass = "fas fa-check-circle";
-    if (tipo === "error") iconClass = "fas fa-times-circle";
-    if (tipo === "warning") iconClass = "fas fa-exclamation-triangle";
+// Toast e modal
+if (!document.getElementById("toastContainer")) {
+    const container = document.createElement("div");
+    container.id = "toastContainer";
+    container.style.position = "fixed";
+    container.style.top = "20px";
+    container.style.right = "20px";
+    container.style.zIndex = "1000";
+    document.body.appendChild(container);
+}
 
-    toast.innerHTML = `<i class="${iconClass}"></i> ${mensagem}`;
-    toastContainer.appendChild(toast);
+if (!document.getElementById("pdfPreview")) {
+    const modal = document.createElement("div");
+    modal.id = "pdfPreview";
+    modal.className = "modal-overlay";
+    modal.innerHTML = `
+        <div class="modal-content" style="width: 80%; height: 80%; background: white; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative;">
+            <button id="closePdfPreview" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 16px; line-height: 25px; text-align: center;">×</button>
+            <div id="pdfContainer" style="width: 100%; height: calc(100% - 40px); margin-top: 30px;"></div>
+            <button id="downloadPdfBtn" style="position: absolute; bottom: 10px; right: 10px; padding: 8px 15px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer;">Baixar PDF</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
 
-    // Adiciona classe para animação de entrada
-    setTimeout(() => toast.classList.add("show"), 10);
+    const style = document.createElement('style');
+    style.textContent = `
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 999;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .toast {
+            background-color: #333;
+            color: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            min-width: 250px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast.success { background-color: #28a745; }
+        .toast.error { background-color: #dc3545; }
+        .toast.warning { background-color: #ffc107; color: #333; }
+        .toast.info { background-color: #17a2b8; }
+        .toast-icon { margin-right: 10px; }
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            width: 0;
+            background-color: rgba(255,255,255,0.7);
+            transition: width 3s linear;
+        }
+    `;
+    document.head.appendChild(style);
 
-    // Remove o toast após alguns segundos
-    setTimeout(() => {
-        toast.classList.remove("show");
-        // Espera a animação de saída terminar antes de remover o elemento
-        setTimeout(() => toast.remove(), 500);
-    }, 5000); // Toast visível por 5 segundos
+    document.getElementById("closePdfPreview").addEventListener("click", fecharPreviewPDF);
+    document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
 }
