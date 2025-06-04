@@ -65,7 +65,7 @@
 }
 
 /* ========================================
-   RESET E BASE STYLES (Mantidos)
+   RESET E BASE STYLES
    ======================================== */
 * {
     box-sizing: border-box;
@@ -85,7 +85,7 @@ body {
 }
 
 /* ========================================
-   CONTAINER PRINCIPAL (Mantido)
+   CONTAINER PRINCIPAL
    ======================================== */
 .container {
     max-width: 1000px;
@@ -97,7 +97,7 @@ body {
 }
 
 /* ========================================
-   CABEÇALHO DO FORMULÁRIO (Mantido)
+   CABEÇALHO DO FORMULÁRIO
    ======================================== */
 .header {
     display: flex;
@@ -151,7 +151,7 @@ body {
 }
 
 /* ========================================
-   BARRA DE PROGRESSO (Mantida)
+   BARRA DE PROGRESSO
    ======================================== */
 .progress-bar {
     height: 6px;
@@ -188,7 +188,7 @@ body {
 }
 
 /* ========================================
-   SEÇÕES DO FORMULÁRIO (Mantidas)
+   SEÇÕES DO FORMULÁRIO
    ======================================== */
 .form-section {
     padding: var(--spacing-xl);
@@ -205,7 +205,7 @@ body {
 }
 
 /* ========================================
-   TÍTULOS DE SEÇÃO (Mantidos)
+   TÍTULOS DE SEÇÃO
    ======================================== */
 .section-title {
     display: flex;
@@ -241,10 +241,11 @@ body {
 }
 
 /* ========================================
-   LAYOUT DE FORMULÁRIO (Mantido)
+   LAYOUT DE FORMULÁRIO (Garante 2 colunas)
    ======================================== */
 .form-row {
     display: flex;
+    flex-wrap: wrap; /* Permite quebrar em telas menores */
     gap: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
 }
@@ -253,12 +254,12 @@ body {
     flex: 1;
     min-width: 0;
     position: relative;
-    /* Adicionado espaçamento inferior para labels não colarem nos inputs */
     margin-bottom: var(--spacing-md);
 }
 
 .form-group.half {
-    flex: 0 0 calc(50% - var(--spacing-lg) / 2); /* Ajustado para gap */
+    flex: 1 1 calc(50% - var(--spacing-lg)); /* Garante 50% com gap */
+    min-width: calc(50% - var(--spacing-lg)); /* Importante para flex-wrap */
 }
 
 .form-group.full {
@@ -266,7 +267,7 @@ body {
 }
 
 /* ========================================
-   CAMPOS DE FORMULÁRIO (Mantidos com ajustes)
+   CAMPOS DE FORMULÁRIO
    ======================================== */
 label {
     display: flex;
@@ -317,7 +318,7 @@ textarea.input-animated {
     line-height: 1.5;
 }
 
-/* Input com Prefixo (Mantido) */
+/* Input com Prefixo */
 .input-prefix {
     position: relative;
     display: flex;
@@ -338,12 +339,12 @@ textarea.input-animated {
 }
 
 /* ========================================
-   CHECKBOXES (Novo - baseado em Radio)
+   CHECKBOXES
    ======================================== */
 .checkbox-group {
     display: flex;
-    flex-direction: column; /* Empilhar verticalmente */
-    gap: var(--spacing-sm); /* Espaçamento menor */
+    flex-direction: column;
+    gap: var(--spacing-sm);
     margin-top: var(--spacing-sm);
 }
 
@@ -351,12 +352,8 @@ textarea.input-animated {
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: var(--spacing-xs) 0; /* Menos padding vertical */
+    padding: var(--spacing-xs) 0;
     transition: var(--transition);
-}
-
-.checkbox-option:hover {
-    /* background-color: var(--primary-light); Opcional */
 }
 
 .checkbox-option input[type="checkbox"] {
@@ -373,7 +370,7 @@ textarea.input-animated {
 }
 
 /* ========================================
-   TOOLTIPS (Mantido)
+   TOOLTIPS
    ======================================== */
 .tooltip {
     display: inline-flex;
@@ -436,7 +433,7 @@ textarea.input-animated {
 }
 
 /* ========================================
-   TABELAS (Ajustado para nova tabela)
+   TABELAS
    ======================================== */
 .table-container {
     margin: var(--spacing-lg) 0;
@@ -454,20 +451,20 @@ table {
 
 th {
     background: linear-gradient(135deg, var(--secondary-color), #e9ecef);
-    padding: var(--spacing-sm) var(--spacing-md); /* Menor padding */
+    padding: var(--spacing-sm) var(--spacing-md);
     text-align: left;
     font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
-    font-size: var(--font-size-xs); /* Fonte menor para cabecalho */
+    font-size: var(--font-size-xs);
     border-bottom: 2px solid var(--border-color);
-    white-space: nowrap; /* Evitar quebra de linha no cabeçalho */
+    white-space: nowrap;
 }
 
 td {
-    padding: var(--spacing-sm) var(--spacing-md); /* Menor padding */
+    padding: var(--spacing-sm) var(--spacing-md);
     border-bottom: 1px solid var(--border-light);
     transition: var(--transition-fast);
-    vertical-align: middle; /* Alinhar verticalmente */
+    vertical-align: middle;
     font-size: var(--font-size-sm);
 }
 
@@ -477,7 +474,7 @@ tr:hover td {
 
 td input,
 td select {
-    border: 1px solid var(--border-light); /* Borda leve para inputs na tabela */
+    border: 1px solid var(--border-light);
     background: transparent;
     width: 100%;
     padding: var(--spacing-xs);
@@ -544,14 +541,14 @@ td select:focus {
 }
 
 /* ========================================
-   SEÇÃO TOTAL (Novo)
+   SEÇÃO TOTAL
    ======================================== */
 .total-section {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* Alinhar ao fundo */
-    align-items: flex-end; /* Alinhar à direita */
-    padding-top: var(--spacing-xl); /* Espaço acima do total */
+    justify-content: flex-end; /* Alinha ao fundo da coluna */
+    align-items: flex-end; /* Alinha à direita da coluna */
+    /* Removido padding-top para melhor alinhamento vertical com a coluna esquerda */
 }
 
 .total-section label {
@@ -559,6 +556,8 @@ td select:focus {
     font-weight: var(--font-weight-bold);
     color: var(--primary-color);
     margin-bottom: var(--spacing-sm);
+    width: 100%; /* Ocupa a largura da coluna */
+    text-align: right; /* Alinha o texto do label à direita */
 }
 
 .total-display {
@@ -568,6 +567,8 @@ td select:focus {
     padding: var(--spacing-md);
     border-radius: var(--border-radius-sm);
     border: 2px solid var(--primary-color);
+    width: fit-content; /* Ajusta a largura ao conteúdo */
+    margin-left: auto; /* Empurra para a direita */
 }
 
 .total-display span {
@@ -585,7 +586,7 @@ td select:focus {
     background: transparent;
     text-align: right;
     padding: 0;
-    width: auto; /* Ajustar largura automaticamente */
+    width: auto;
     min-width: 100px;
 }
 
@@ -594,8 +595,17 @@ td select:focus {
 }
 
 /* ========================================
-   BOTÕES (Mantidos)
+   BOTÕES
    ======================================== */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-light);
+}
+
 .primary-button {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
     color: white;
@@ -651,7 +661,7 @@ td select:focus {
     transition: var(--transition);
     display: inline-flex;
     align-items: center;
-    margin-top: var(--spacing-md);
+    /* Removido margin-top para alinhar com botão primário */
 }
 
 .secondary-button:hover {
@@ -668,64 +678,38 @@ td select:focus {
 }
 
 /* ========================================
-   ASSINATURAS (Removido - Não presente no FOR_FIN_02_01)
+   MENSAGENS DE VALIDAÇÃO
    ======================================== */
-/* .signatures { ... } */
-/* .signature-field { ... } */
-/* .signature-line { ... } */
-
-/* ========================================
-   AÇÕES DO FORMULÁRIO (Mantido)
-   ======================================== */
-.form-actions {
-    display: flex;
-    justify-content: center;
-    gap: var(--spacing-lg);
-    padding: var(--spacing-xl);
-    background-color: var(--bg-secondary);
-    border-top: 1px solid var(--border-light);
+.validation-message {
+    color: var(--error-color);
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-xs);
+    min-height: 1.2em; /* Reserva espaço */
+    transition: opacity 0.3s ease;
+    opacity: 0;
 }
 
-/* ========================================
-   ESTADOS DE VALIDAÇÃO (Mantidos)
-   ======================================== */
+.input-error + .validation-message,
+.input-error ~ .validation-message /* Para grupos como checkbox */
+{
+    opacity: 1;
+}
+
 .input-error {
     border-color: var(--error-color) !important;
-    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
 }
 
 .input-success {
     border-color: var(--success-color) !important;
-    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15) !important;
-}
-
-.validation-message {
-    font-size: var(--font-size-xs);
-    color: var(--error-color);
-    margin-top: var(--spacing-xs);
-    min-height: 16px;
-    display: flex;
-    align-items: center;
-}
-
-.validation-message::before {
-    content: '⚠';
-    margin-right: var(--spacing-xs);
-    /* Ocultar ícone se não houver mensagem */
-    display: inline-block;
-    visibility: hidden;
-}
-
-.validation-message:not(:empty)::before {
-    visibility: visible;
 }
 
 /* ========================================
-   TOASTS / NOTIFICAÇÕES (Mantido)
+   TOASTS / NOTIFICAÇÕES
    ======================================== */
 #toastContainer {
     position: fixed;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     z-index: 1000;
     display: flex;
@@ -741,27 +725,10 @@ td select:focus {
     box-shadow: var(--shadow-lg);
     display: flex;
     align-items: center;
+    gap: var(--spacing-sm);
     opacity: 0;
     transform: translateX(100%);
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    min-width: 250px;
-    position: relative;
-    overflow: hidden;
-}
-
-.toast.show {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.toast-icon {
-    margin-right: var(--spacing-md);
-    font-size: 1.2em;
-}
-
-.toast-message {
-    flex-grow: 1;
-    font-size: var(--font-size-sm);
+    animation: slideIn 0.5s forwards, fadeOut 0.5s 4.5s forwards;
 }
 
 .toast.success {
@@ -772,53 +739,41 @@ td select:focus {
     background-color: var(--error-color);
 }
 
-.toast.warning {
-    background-color: var(--warning-color);
-    color: var(--text-primary);
-}
-
 .toast.info {
     background-color: var(--info-color);
 }
 
-.toast-progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 4px;
-    width: 0;
-    background-color: rgba(255, 255, 255, 0.5);
-    transition: width 3s linear;
+.toast i {
+    font-size: 1.2em;
 }
 
-/* ========================================
-   ANIMAÇÕES E UTILITÁRIOS (Mantidos)
-   ======================================== */
-.fade-in {
-    animation: fadeIn 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
+@keyframes slideIn {
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(100%);
     }
 }
 
 /* ========================================
-   RESPONSIVIDADE (Mantida)
+   RESPONSIVIDADE
    ======================================== */
 @media (max-width: 768px) {
-    body {
-        padding: var(--spacing-md);
+    .form-row {
+        flex-direction: column; /* Empilha colunas */
+        gap: 0; /* Remove gap vertical */
     }
 
-    .container {
-        margin: 0;
+    .form-group.half {
+        flex: 1 1 100%; /* Ocupa largura total */
+        min-width: 100%;
+        margin-bottom: var(--spacing-lg); /* Adiciona espaço entre grupos empilhados */
     }
 
     .header {
@@ -827,46 +782,49 @@ td select:focus {
         padding: var(--spacing-lg);
     }
 
+    .title h1 {
+        font-size: var(--font-size-xl);
+    }
+
     .form-info {
-        margin-top: var(--spacing-md);
         text-align: center;
-        flex: none;
-    }
-
-    .form-row {
-        flex-direction: column;
-        gap: 0; /* Remover gap na coluna */
-    }
-
-    .form-group.half {
-        flex: 1 1 100%;
-        /* Remover ajuste de gap que não se aplica mais */
+        margin-top: var(--spacing-md);
     }
 
     .form-actions {
         flex-direction: column;
-        gap: var(--spacing-md);
+        gap: var(--spacing-sm);
     }
 
-    .checkbox-group {
-       flex-direction: row; /* Checkboxes lado a lado em mobile se couber */
-       flex-wrap: wrap;
-       gap: var(--spacing-md);
+    .primary-button,
+    .secondary-button {
+        width: 100%;
+        justify-content: center;
     }
 
-    #itensTable th,
-    #itensTable td {
-        padding: var(--spacing-sm);
-        font-size: var(--font-size-xs);
+    .total-section {
+        align-items: center; /* Centraliza total em telas pequenas */
     }
 
-    /* Ocultar colunas menos importantes em telas pequenas se necessário */
-    /* Exemplo: Ocultar código do item */
-    /*
-    #itensTable th:nth-child(1),
-    #itensTable td:nth-child(1) {
-        display: none;
+    .total-display {
+        width: 100%;
+        justify-content: center;
     }
-    */
+
+    .total-display input {
+        text-align: center;
+    }
+}
+
+/* ========================================
+   ANIMAÇÕES GERAIS
+   ======================================== */
+.fade-in {
+    animation: fadeInAnimation 0.8s ease forwards;
+}
+
+@keyframes fadeInAnimation {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 

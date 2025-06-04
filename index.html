@@ -3,84 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulário de Autorização de Pagamento</title> <!-- Título Atualizado -->
+    <title>Formulário de Autorização de Pagamento</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
-    <!-- REMOVIDO: jsPDF e html2canvas não são mais necessários no front-end -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script> -->
-    <!-- Biblioteca para máscaras (Mantida) -->
     <script src="https://cdn.jsdelivr.net/npm/inputmask@5.0.8/dist/inputmask.min.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="form-container">
-            <!-- O ID do formulário é importante para o script.js -->
             <form id="autorizacaoForm">
-                <!-- Cabeçalho Mantido (Estilo Original) -->
+                <!-- Cabeçalho -->
                 <div class="header">
                     <div class="title">
-                        <h1>FORMULÁRIO DE AUTORIZAÇÃO DE PAGAMENTO</h1> <!-- Título Atualizado -->
+                        <h1>FORMULÁRIO DE AUTORIZAÇÃO DE PAGAMENTO</h1>
                     </div>
                     <div class="form-info">
-                        <p class="form-code">FOR_FIN_02_01</p> <!-- Código Atualizado -->
+                        <p class="form-code">FOR_FIN_02_01</p>
                         <p class="form-version">VERSÃO: 01</p>
                     </div>
                 </div>
 
-                <!-- Barra de Progresso (Mantida) -->
+                <!-- Barra de Progresso -->
                 <div class="progress-bar">
                     <div class="progress" id="formProgress"></div>
                 </div>
 
-                <!-- Seção: Dados Gerais da Empresa e Pagamento (Campos do FOR_FIN_02_01) -->
+                <!-- Seção: Dados Gerais da Empresa e Pagamento -->
                 <div class="form-section">
                     <div class="form-row">
                         <!-- Coluna Esquerda: Dados da Empresa -->
                         <div class="form-group half">
-                            <label for="cnpjEmpresa">
-                                <i class="fas fa-id-card"></i> CNPJ:
-                                <span class="tooltip" data-tooltip="CNPJ da empresa solicitante">?</span>
-                            </label>
+                            <label for="cnpjEmpresa"><i class="fas fa-id-card"></i> CNPJ: <span class="tooltip" data-tooltip="CNPJ da empresa solicitante">?</span></label>
                             <input type="text" id="cnpjEmpresa" name="cnpjEmpresa" placeholder="XX.XXX.XXX/XXXX-XX" class="input-animated">
                             <div class="validation-message" id="cnpjEmpresa-validation"></div>
 
-                            <label for="empresa">
-                                <i class="fas fa-building"></i> EMPRESA:
-                                <span class="tooltip" data-tooltip="Razão social da empresa solicitante">?</span>
-                            </label>
+                            <label for="empresa"><i class="fas fa-building"></i> EMPRESA: <span class="tooltip" data-tooltip="Razão social da empresa solicitante">?</span></label>
                             <input type="text" id="empresa" name="empresa" placeholder="Insira a razão social" class="input-animated">
                             <div class="validation-message" id="empresa-validation"></div>
 
-                            <label for="emailSolicitante">
-                                <i class="fas fa-envelope"></i> E-MAIL:
-                                <span class="tooltip" data-tooltip="E-mail corporativo do solicitante">?</span>
-                            </label>
+                            <label for="emailSolicitante"><i class="fas fa-envelope"></i> E-MAIL: <span class="tooltip" data-tooltip="E-mail corporativo do solicitante">?</span></label>
                             <input type="email" id="emailSolicitante" name="emailSolicitante" placeholder="Insira seu e-mail corporativo" class="input-animated">
                             <div class="validation-message" id="emailSolicitante-validation"></div>
 
-                            <label for="solicitante">
-                                <i class="fas fa-user-edit"></i> SOLICITANTE:
-                                <span class="tooltip" data-tooltip="Nome completo do solicitante">?</span>
-                            </label>
+                            <label for="solicitante"><i class="fas fa-user-edit"></i> SOLICITANTE: <span class="tooltip" data-tooltip="Nome completo do solicitante">?</span></label>
                             <input type="text" id="solicitante" name="solicitante" placeholder="Insira aqui o seu nome" class="input-animated">
                             <div class="validation-message" id="solicitante-validation"></div>
 
-                            <label for="departamento">
-                                <i class="fas fa-sitemap"></i> DEPARTAMENTO:
-                                <span class="tooltip" data-tooltip="Departamento do solicitante">?</span>
-                            </label>
+                            <label for="departamento"><i class="fas fa-sitemap"></i> DEPARTAMENTO: <span class="tooltip" data-tooltip="Departamento do solicitante">?</span></label>
                             <input type="text" id="departamento" name="departamento" placeholder="Insira aqui o departamento" class="input-animated">
                             <div class="validation-message" id="departamento-validation"></div>
                         </div>
 
                         <!-- Coluna Direita: Dados de Pagamento -->
                         <div class="form-group half">
-                            <label for="formaPagamento">
-                                <i class="fas fa-credit-card"></i> FORMA DE PAGAMENTO:
-                                <span class="tooltip" data-tooltip="Selecione a forma de pagamento">?</span>
-                            </label>
-                            <!-- Usando Checkbox conforme o PDF FOR_FIN_02_01 -->
+                            <label for="formaPagamento"><i class="fas fa-credit-card"></i> FORMA DE PAGAMENTO: <span class="tooltip" data-tooltip="Selecione a forma de pagamento">?</span></label>
                             <div class="checkbox-group">
                                 <div class="checkbox-option">
                                     <input type="checkbox" id="pgtoPixTed" name="formaPagamento" value="PIX/TED">
@@ -97,24 +73,15 @@
                             </div>
                             <div class="validation-message" id="formaPagamento-validation"></div>
 
-                            <label for="dataPagamento">
-                                <i class="fas fa-calendar-check"></i> DATA PARA PAGAMENTO:
-                                <span class="tooltip" data-tooltip="Data prevista para o pagamento">?</span>
-                            </label>
+                            <label for="dataPagamento"><i class="fas fa-calendar-check"></i> DATA PARA PAGAMENTO: <span class="tooltip" data-tooltip="Data prevista para o pagamento">?</span></label>
                             <input type="date" id="dataPagamento" name="dataPagamento" class="input-animated">
                             <div class="validation-message" id="dataPagamento-validation"></div>
 
-                            <label for="ordemCompra">
-                                <i class="fas fa-file-invoice"></i> ORDEM DE COMPRA:
-                                <span class="tooltip" data-tooltip="Número da ordem de compra relacionada (se houver)">?</span>
-                            </label>
+                            <label for="ordemCompra"><i class="fas fa-file-invoice"></i> ORDEM DE COMPRA: <span class="tooltip" data-tooltip="Número da ordem de compra relacionada (se houver)">?</span></label>
                             <input type="text" id="ordemCompra" name="ordemCompra" placeholder="Insira a ordem de compra (opcional)" class="input-animated">
                             <div class="validation-message" id="ordemCompra-validation"></div>
 
-                            <label for="centroCusto">
-                                <i class="fas fa-chart-pie"></i> CENTRO DE CUSTO:
-                                <span class="tooltip" data-tooltip="Centro de custo relacionado (se houver)">?</span>
-                            </label>
+                            <label for="centroCusto"><i class="fas fa-chart-pie"></i> CENTRO DE CUSTO: <span class="tooltip" data-tooltip="Centro de custo relacionado (se houver)">?</span></label>
                             <input type="text" id="centroCusto" name="centroCusto" placeholder="Insira o centro de custo (opcional)" class="input-animated">
                             <div class="validation-message" id="centroCusto-validation"></div>
                         </div>
@@ -125,17 +92,14 @@
                 <div class="form-section">
                     <div class="form-row">
                         <div class="form-group full">
-                            <label for="observacaoFinalidade">
-                                <i class="fas fa-info-circle"></i> OBSERVAÇÃO DESCRITA NA ORDEM DE COMPRA / FINALIDADE:
-                                <span class="tooltip" data-tooltip="Descreva a finalidade ou observação relevante">?</span>
-                            </label>
+                            <label for="observacaoFinalidade"><i class="fas fa-info-circle"></i> OBSERVAÇÃO DESCRITA NA ORDEM DE COMPRA / FINALIDADE: <span class="tooltip" data-tooltip="Descreva a finalidade ou observação relevante">?</span></label>
                             <textarea id="observacaoFinalidade" name="observacaoFinalidade" placeholder="Insira aqui a observação descrita na ordem de compra ou a finalidade do pagamento..." class="input-animated"></textarea>
                             <div class="validation-message" id="observacaoFinalidade-validation"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Seção: Tabela de Itens (Estrutura do FOR_FIN_02_01) -->
+                <!-- Seção: Tabela de Itens -->
                 <div class="form-section">
                     <div class="section-title">
                         <h3><i class="fas fa-list-alt"></i> ITENS / SERVIÇOS</h3>
@@ -153,14 +117,14 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Linhas serão adicionadas dinamicamente aqui pelo script.js -->
+                                <!-- Linhas serão adicionadas dinamicamente -->
                             </tbody>
                         </table>
                     </div>
                     <button type="button" id="addRowBtn" class="secondary-button"><i class="fas fa-plus"></i> Adicionar Item</button>
                 </div>
 
-                <!-- Seção: Dados para Pagamento (Inferior) e Total -->
+                <!-- Seção: Dados para Pagamento e Total -->
                 <div class="form-section">
                     <div class="form-row">
                         <!-- Coluna Esquerda: Dados Bancários -->
@@ -168,71 +132,51 @@
                             <div class="section-title">
                                 <h3><i class="fas fa-university"></i> DADOS PARA PAGAMENTO</h3>
                             </div>
-                            <label for="beneficiario">
-                                <i class="fas fa-user"></i> BENEFICIÁRIO:
-                                <span class="tooltip" data-tooltip="Nome completo do beneficiário do pagamento">?</span>
-                            </label>
+                            <label for="beneficiario"><i class="fas fa-user"></i> BENEFICIÁRIO: <span class="tooltip" data-tooltip="Nome completo do beneficiário">?</span></label>
                             <input type="text" id="beneficiario" name="beneficiario" placeholder="Insira o titular da conta" class="input-animated">
                             <div class="validation-message" id="beneficiario-validation"></div>
 
-                            <label for="cpfCnpjBeneficiario">
-                                <i class="fas fa-id-card"></i> CPF / CNPJ:
-                                <span class="tooltip" data-tooltip="CPF ou CNPJ do beneficiário">?</span>
-                            </label>
+                            <label for="cpfCnpjBeneficiario"><i class="fas fa-id-card"></i> CPF / CNPJ: <span class="tooltip" data-tooltip="CPF ou CNPJ do beneficiário">?</span></label>
                             <input type="text" id="cpfCnpjBeneficiario" name="cpfCnpjBeneficiario" placeholder="Insira o CPF ou CNPJ do titular" class="input-animated">
                             <div class="validation-message" id="cpfCnpjBeneficiario-validation"></div>
 
-                            <label for="banco">
-                                <i class="fas fa-landmark"></i> BANCO:
-                                <span class="tooltip" data-tooltip="Nome do banco para depósito">?</span>
-                            </label>
+                            <label for="banco"><i class="fas fa-landmark"></i> BANCO: <span class="tooltip" data-tooltip="Nome do banco">?</span></label>
                             <input type="text" id="banco" name="banco" placeholder="Insira o banco de destino" class="input-animated">
                             <div class="validation-message" id="banco-validation"></div>
 
-                            <label for="agencia">
-                                <i class="fas fa-store-alt"></i> AGÊNCIA:
-                                <span class="tooltip" data-tooltip="Número da agência bancária">?</span>
-                            </label>
+                            <label for="agencia"><i class="fas fa-store-alt"></i> AGÊNCIA: <span class="tooltip" data-tooltip="Número da agência">?</span></label>
                             <input type="text" id="agencia" name="agencia" placeholder="Insira a agência" class="input-animated">
                             <div class="validation-message" id="agencia-validation"></div>
 
-                            <label for="conta">
-                                <i class="fas fa-wallet"></i> CONTA:
-                                <span class="tooltip" data-tooltip="Número da conta bancária">?</span>
-                            </label>
+                            <label for="conta"><i class="fas fa-wallet"></i> CONTA: <span class="tooltip" data-tooltip="Número da conta">?</span></label>
                             <input type="text" id="conta" name="conta" placeholder="Insira o n° da conta" class="input-animated">
                             <div class="validation-message" id="conta-validation"></div>
 
-                            <label for="tipoConta">
-                                <i class="fas fa-piggy-bank"></i> TIPO DE CONTA:
-                                <span class="tooltip" data-tooltip="Tipo da conta bancária">?</span>
-                            </label>
+                            <label for="tipoConta"><i class="fas fa-piggy-bank"></i> TIPO DE CONTA: <span class="tooltip" data-tooltip="Tipo da conta">?</span></label>
                             <select id="tipoConta" name="tipoConta" class="input-animated">
                                 <option value="">Selecione</option>
                                 <option value="Corrente">Corrente</option>
                                 <option value="Poupança">Poupança</option>
-                                <!-- Adicionar outros tipos se necessário -->
                             </select>
                             <div class="validation-message" id="tipoConta-validation"></div>
 
-                            <label for="chavePix">
-                                <i class="fas fa-key"></i> CHAVE PIX:
-                                <span class="tooltip" data-tooltip="Chave PIX do beneficiário (se aplicável)">?</span>
-                            </label>
+                            <label for="chavePix"><i class="fas fa-key"></i> CHAVE PIX: <span class="tooltip" data-tooltip="Chave PIX (opcional)">?</span></label>
                             <input type="text" id="chavePix" name="chavePix" placeholder="Insira a chave PIX (opcional)" class="input-animated">
                             <div class="validation-message" id="chavePix-validation"></div>
                         </div>
 
-                        <!-- Coluna Direita: Total -->
+                        <!-- Coluna Direita: Total Geral (Editável) -->
                         <div class="form-group half total-section">
-                            <label for="valorTotalItens">
-                                <i class="fas fa-dollar-sign"></i> TOTAL:
+                            <label for="totalGeral">
+                                <i class="fas fa-dollar-sign"></i> TOTAL GERAL:
+                                <span class="tooltip" data-tooltip="Valor total do pagamento. Deve ser preenchido manualmente.">?</span>
                             </label>
                             <div class="total-display">
                                 <span>R$</span>
-                                <!-- Este campo será preenchido pelo script.js -->
-                                <input type="text" id="valorTotalItens" name="valorTotalItens" class="input-animated" placeholder="0,00" readonly>
+                                <!-- Campo Total Geral agora é editável -->
+                                <input type="text" id="totalGeral" name="totalGeral" class="input-animated" placeholder="0,00">
                             </div>
+                             <div class="validation-message" id="totalGeral-validation"></div>
                         </div>
                     </div>
                 </div>
@@ -240,21 +184,14 @@
                 <!-- Ações do Formulário -->
                 <div class="form-actions">
                     <button type="button" id="limparFormBtn" class="secondary-button"><i class="fas fa-eraser"></i> Limpar Formulário</button>
-                    <!-- Botão modificado para exportar JSON -->
-                    <button type="button" id="exportJsonBtn" class="primary-button"><i class="fas fa-file-export"></i> Exportar Dados (JSON)</button>
+                    <!-- Botão alterado para Gerar PDF -->
+                    <button type="button" id="generatePdfBtn" class="primary-button"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
                 </div>
             </form>
         </div>
-
-        <!-- Container para Toasts/Notificações (Mantido) -->
         <div id="toastContainer"></div>
-
-        <!-- REMOVIDO: Modal de Preview do PDF não é mais necessário -->
-        <!-- <div id="pdfPreviewModal" class="modal"> ... </div> -->
-
     </div>
-
-    <!-- Script JS no final para garantir que o DOM esteja carregado -->
     <script src="script.js"></script>
 </body>
 </html>
+
