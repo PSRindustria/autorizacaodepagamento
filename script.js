@@ -17,9 +17,6 @@ document.addEventListener("DOMContentLoaded", function () {
             this.classList.remove("input-error");
         });
     });
-
-    // Modal PDF preview
-    inicializarModalPDF();
 });
 
 function inicializarMascaras() {
@@ -191,7 +188,7 @@ function loadImageAsBase64(url) {
     });
 }
 
-// Função principal de geração de PDF
+// Função principal de geração de PDF (download automático)
 async function gerarPDF() {
     mostrarToast("Gerando PDF...", "info");
     const { jsPDF } = window.jspdf;
@@ -317,38 +314,7 @@ async function gerarPDF() {
     doc.line(12, y, 70, y);
     doc.text("Solicitante", 12, y + 5);
 
-    // Preview em modal + download
-    window.pdfDoc = doc; // global para download
-    try {
-        const pdfData = doc.output("datauristring");
-        document.getElementById("pdfContainer").innerHTML = `<embed width="100%" height="100%" src="${pdfData}" type="application/pdf">`;
-        document.getElementById("pdfPreview").classList.add("active");
-        mostrarToast("PDF gerado com sucesso!", "success");
-    } catch (e) {
-        mostrarToast("Erro ao gerar preview do PDF.", "error");
-    }
-}
-
-// Modal PDF Preview + Download
-function inicializarModalPDF() {
-    if (!document.getElementById("pdfPreview")) {
-        const modal = document.createElement("div");
-        modal.id = "pdfPreview";
-        modal.className = "modal-overlay";
-        modal.innerHTML = `
-            <div class="modal-content" style="width: 80%; height: 80%; background: white; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative;">
-                <button id="closePdfPreview" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 16px; line-height: 25px; text-align: center;">×</button>
-                <div id="pdfContainer" style="width: 100%; height: calc(100% - 40px); margin-top: 30px;"></div>
-                <button id="downloadPdfBtn" style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); background: #2471a3; color: white; padding: 8px 22px; border: none; border-radius: 6px; font-size: 15px; cursor: pointer;">Baixar PDF</button>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        document.getElementById("closePdfPreview").onclick = function () {
-            modal.classList.remove("active");
-        };
-        document.getElementById("downloadPdfBtn").onclick = function () {
-            if (window.pdfDoc) window.pdfDoc.save("autorizacao_pagamento.pdf");
-        };
-    }
+    // Download automático, sem modal
+    doc.save("autorizacao_pagamento.pdf");
+    mostrarToast("PDF gerado com sucesso!", "success");
 }
