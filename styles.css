@@ -599,7 +599,7 @@ td select:focus {
    ======================================== */
 .form-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: var(--spacing-md);
     padding: var(--spacing-xl);
     background-color: var(--bg-secondary);
