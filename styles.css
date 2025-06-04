@@ -1,0 +1,930 @@
+/* ========================================
+   VARIÁVEIS CSS - DESIGN SYSTEM
+   ======================================== */
+:root {
+    /* Cores Principais */
+    --primary-color: #0056b3;
+    --primary-hover: #003d82;
+    --primary-light: rgba(0, 86, 179, 0.1);
+    
+    /* Cores Secundárias */
+    --secondary-color: #f8f9fa;
+    --accent-color: #17a2b8;
+    
+    /* Cores de Estado */
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    
+    /* Cores de Texto */
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-muted: #868e96;
+    
+    /* Cores de Fundo */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-light: #f5f5f5;
+    
+    /* Bordas */
+    --border-color: #dee2e6;
+    --border-light: #e9ecef;
+    --border-radius: 8px;
+    --border-radius-sm: 4px;
+    
+    /* Sombras */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.15);
+    
+    /* Transições */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease;
+    
+    /* Espaçamentos */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* Tipografia */
+    --font-family: 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-size-xs: 11px;
+    --font-size-sm: 12px;
+    --font-size-base: 14px;
+    --font-size-lg: 16px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 20px;
+    
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+}
+
+/* ========================================
+   RESET E BASE STYLES
+   ======================================== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-light);
+    padding: var(--spacing-lg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   CONTAINER PRINCIPAL
+   ======================================== */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.form-container {
+    /* Adicionado para animação */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.form-container.fade-in {
+    opacity: 1;
+}
+
+/* ========================================
+   CABEÇALHO DO FORMULÁRIO (Mantido)
+   ======================================== */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xl);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    color: white;
+    position: relative;
+}
+
+.header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        var(--success-color) 0%, 
+        var(--info-color) 50%, 
+        var(--warning-color) 100%);
+}
+
+.title {
+    flex: 1;
+    text-align: center;
+}
+
+.title h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.form-info {
+    flex: 0 0 100px;
+    text-align: right;
+}
+
+.form-code {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-xs);
+}
+
+.form-version {
+    font-size: var(--font-size-sm);
+    opacity: 0.8;
+}
+
+/* ========================================
+   BARRA DE PROGRESSO (Mantida)
+   ======================================== */
+.progress-bar {
+    height: 6px;
+    background-color: var(--bg-secondary);
+    position: relative;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    width: 0;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.progress::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.3) 50%, 
+        transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* ========================================
+   SEÇÕES DO FORMULÁRIO
+   ======================================== */
+.form-section {
+    padding: var(--spacing-xl);
+    border-bottom: 1px solid var(--border-light);
+    transition: var(--transition);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.form-section:hover {
+    background-color: rgba(0, 86, 179, 0.02);
+}
+
+/* ========================================
+   TÍTULOS DE SEÇÃO
+   ======================================== */
+.section-title {
+    display: flex;
+    align-items: center;
+    margin: 0 0 var(--spacing-lg) 0;
+    padding: var(--spacing-md) 0;
+    border-bottom: 2px solid var(--primary-light);
+    position: relative;
+}
+
+.section-title::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background-color: var(--primary-color);
+}
+
+.section-title h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--primary-color);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.section-title h3 i {
+    margin-right: var(--spacing-sm);
+    font-size: 1.1em;
+}
+
+/* ========================================
+   LAYOUT DE FORMULÁRIO
+   ======================================== */
+.form-row {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    margin-bottom: var(--spacing-md); /* Adicionado espaço entre labels/inputs */
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group.half {
+    flex: 0 0 calc(50% - var(--spacing-lg) / 2); /* Ajustado para gap */
+}
+
+.form-group.full {
+    flex: 1 1 100%;
+}
+
+/* ========================================
+   CAMPOS DE FORMULÁRIO
+   ======================================== */
+label {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+label i {
+    margin-right: var(--spacing-sm);
+    color: var(--primary-color);
+    font-size: 1em;
+    width: 16px;
+    text-align: center;
+}
+
+.input-animated,
+select.input-animated,
+textarea.input-animated {
+    width: 100%;
+    padding: 12px var(--spacing-md);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
+    font-family: inherit;
+    background-color: var(--bg-primary);
+    transition: var(--transition);
+    position: relative;
+}
+
+.input-animated:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    outline: none;
+    transform: translateY(-2px);
+}
+
+.input-animated:hover:not(:focus) {
+    border-color: var(--text-secondary);
+    box-shadow: var(--shadow-sm);
+}
+
+textarea.input-animated {
+    min-height: 80px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* Input com Prefixo */
+.input-prefix {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-prefix span {
+    position: absolute;
+    left: var(--spacing-md);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-base);
+    z-index: 1;
+    pointer-events: none; /* Para não interferir no clique do input */
+}
+
+.input-prefix input {
+    padding-left: 40px;
+}
+
+/* ========================================
+   CHECKBOXES (Novo)
+   ======================================== */
+.checkbox-group {
+    display: flex;
+    flex-direction: column; /* Empilhar verticalmente */
+    gap: var(--spacing-sm); /* Espaço entre opções */
+    margin-top: var(--spacing-sm);
+}
+
+.checkbox-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: var(--spacing-xs) 0; /* Menor padding vertical */
+    transition: var(--transition);
+}
+
+.checkbox-option:hover {
+    /* Opcional: adicionar um leve destaque */
+    /* background-color: var(--primary-light); */
+}
+
+.checkbox-option input[type="checkbox"] {
+    margin-right: var(--spacing-sm);
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.checkbox-label {
+    margin: 0;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-normal);
+}
+
+/* ========================================
+   TOOLTIPS (Mantido)
+   ======================================== */
+.tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, var(--info-color), var(--accent-color));
+    color: white;
+    border-radius: 50%;
+    font-size: var(--font-size-xs);
+    margin-left: var(--spacing-sm);
+    cursor: help;
+    position: relative;
+    transition: var(--transition);
+}
+
+.tooltip:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-sm);
+}
+
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--text-primary);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: var(--shadow);
+    animation: fadeInUp 0.3s ease;
+}
+
+.tooltip:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--text-primary);
+    z-index: 10;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* ========================================
+   TABELAS (Ajustado para Itens)
+   ======================================== */
+.table-container {
+    margin: var(--spacing-lg) 0;
+    border-radius: var(--border-radius-sm);
+    overflow-x: auto; /* Permitir rolagem horizontal se necessário */
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-primary);
+}
+
+th {
+    background: linear-gradient(135deg, var(--secondary-color), #e9ecef);
+    padding: var(--spacing-sm) var(--spacing-md); /* Padding ajustado */
+    text-align: left;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs); /* Fonte menor para caber mais colunas */
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap; /* Evitar quebra de linha no cabeçalho */
+}
+
+td {
+    padding: var(--spacing-sm) var(--spacing-md); /* Padding ajustado */
+    border-bottom: 1px solid var(--border-light);
+    transition: var(--transition-fast);
+    font-size: var(--font-size-sm);
+    vertical-align: middle; /* Alinhar conteúdo verticalmente */
+}
+
+tr:hover td {
+    background-color: var(--primary-light);
+}
+
+td input,
+td select {
+    border: 1px solid transparent; /* Borda sutil */
+    background: transparent;
+    width: 100%;
+    padding: var(--spacing-xs) 0; /* Padding menor */
+    font-size: var(--font-size-sm);
+    color: inherit;
+    border-radius: var(--border-radius-sm);
+}
+
+td input:focus,
+td select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background-color: white; /* Fundo branco ao focar */
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+/* Ajustes específicos para colunas da tabela de itens */
+#itensTable th:nth-child(1), /* Código */
+#itensTable td:nth-child(1) {
+    width: 10%;
+}
+
+#itensTable th:nth-child(2), /* Descrição */
+#itensTable td:nth-child(2) {
+    width: 35%;
+}
+
+#itensTable th:nth-child(3), /* Qtd */
+#itensTable td:nth-child(3) {
+    width: 10%;
+    text-align: right;
+}
+
+#itensTable th:nth-child(4), /* V. Unitário */
+#itensTable td:nth-child(4) {
+    width: 15%;
+    text-align: right;
+}
+
+#itensTable th:nth-child(5), /* V. Total */
+#itensTable td:nth-child(5) {
+    width: 15%;
+    text-align: right;
+    font-weight: var(--font-weight-medium);
+}
+
+#itensTable th:nth-child(6), /* Ações */
+#itensTable td:nth-child(6) {
+    width: 15%;
+    text-align: center;
+}
+
+.delete-row-btn {
+    background: none;
+    border: none;
+    color: var(--error-color);
+    cursor: pointer;
+    font-size: 1.1em;
+    padding: var(--spacing-xs);
+    transition: var(--transition-fast);
+}
+
+.delete-row-btn:hover {
+    color: darkred;
+    transform: scale(1.2);
+}
+
+/* ========================================
+   SEÇÃO TOTAL (Novo)
+   ======================================== */
+.total-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Alinhar à direita */
+    justify-content: center; /* Centralizar verticalmente (se houver espaço) */
+    padding-top: var(--spacing-xl); /* Espaço acima do total */
+}
+
+.total-section label {
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-lg); /* Tamanho maior para o label Total */
+    font-weight: var(--font-weight-bold);
+}
+
+.total-display {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-light);
+    min-width: 150px; /* Largura mínima */
+    justify-content: flex-end;
+}
+
+.total-display span {
+    margin-right: var(--spacing-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+}
+
+.total-display input {
+    font-size: var(--font-size-xl); /* Tamanho maior para o valor */
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    text-align: right;
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: auto; /* Ajustar largura ao conteúdo */
+    min-width: 100px;
+}
+
+/* ========================================
+   BOTÕES
+   ======================================== */
+.primary-button {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.primary-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.2), 
+        transparent);
+    transition: left 0.5s;
+}
+
+.primary-button:hover::before {
+    left: 100%;
+}
+
+.primary-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.primary-button:active {
+    transform: translateY(0);
+}
+
+.secondary-button {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    margin-top: var(--spacing-md);
+}
+
+.secondary-button:hover {
+    background-color: white;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.primary-button i,
+.secondary-button i {
+    margin-right: var(--spacing-sm);
+}
+
+/* ========================================
+   ASSINATURAS (Removido - não presente no novo PDF)
+   ======================================== */
+/* .signatures { ... } */
+/* .signature-field { ... } */
+/* .signature-line { ... } */
+
+/* ========================================
+   AÇÕES DO FORMULÁRIO
+   ======================================== */
+.form-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-light);
+}
+
+/* ========================================
+   ESTADOS DE VALIDAÇÃO
+   ======================================== */
+.input-error {
+    border-color: var(--error-color) !important;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15) !important;
+}
+
+.input-success {
+    border-color: var(--success-color) !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15) !important;
+}
+
+.validation-message {
+    font-size: var(--font-size-xs);
+    color: var(--error-color);
+    margin-top: var(--spacing-xs);
+    min-height: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.validation-message::before {
+    content: '⚠';
+    margin-right: var(--spacing-xs);
+    display: none; /* Ocultar por padrão */
+}
+
+.input-error + .validation-message::before,
+.checkbox-group.input-error ~ .validation-message::before {
+    display: inline; /* Mostrar ícone apenas em erro */
+}
+
+.input-error + .validation-message,
+.checkbox-group.input-error ~ .validation-message {
+    color: var(--error-color);
+}
+
+/* ========================================
+   TOASTS / NOTIFICAÇÕES (Novo ou Adaptado)
+   ======================================== */
+#toastContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.toast {
+    background-color: var(--text-primary);
+    color: white;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    min-width: 250px;
+    position: relative;
+    overflow: hidden;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast.success { background-color: var(--success-color); }
+.toast.error { background-color: var(--error-color); }
+.toast.warning { background-color: var(--warning-color); color: var(--text-primary); }
+.toast.info { background-color: var(--info-color); }
+
+.toast-icon {
+    font-size: 1.2em;
+}
+
+.toast-message {
+    flex-grow: 1;
+    font-size: var(--font-size-sm);
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 0;
+    background-color: rgba(0, 0, 0, 0.2);
+    transition: width 3s linear;
+}
+
+/* ========================================
+   MODAL DE PREVIEW PDF (Novo ou Adaptado)
+   ======================================== */
+.modal {
+    display: none; /* Oculto por padrão */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    animation: fadeInModal 0.3s ease;
+}
+
+.modal-content {
+    background-color: var(--bg-primary);
+    margin: 5% auto;
+    padding: var(--spacing-xl);
+    border: 1px solid var(--border-light);
+    width: 80%;
+    max-width: 900px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+}
+
+.close-button {
+    color: var(--text-muted);
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-lg);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.modal-content h2 {
+    margin-bottom: var(--spacing-lg);
+    color: var(--primary-color);
+    font-weight: var(--font-weight-semibold);
+}
+
+#pdfPreviewFrame {
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ========================================
+   RESPONSIVIDADE
+   ======================================== */
+@media (max-width: 768px) {
+    body {
+        padding: var(--spacing-md);
+    }
+    
+    .container {
+        margin: 0;
+    }
+    
+    .header {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--spacing-lg);
+    }
+        
+    .form-info {
+        margin-top: var(--spacing-md);
+        text-align: center;
+        flex: none;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0; /* Remover gap em coluna */
+    }
+    
+    .form-group.half {
+        flex: 1 1 100%; /* Ocupar largura total */
+        margin-bottom: var(--spacing-lg); /* Adicionar espaço inferior */
+    }
+
+    .form-group.half:last-child {
+        margin-bottom: 0;
+    }
+    
+    .total-section {
+        align-items: flex-start; /* Alinhar total à esquerda */
+        margin-top: var(--spacing-lg);
+    }
+
+    .total-display {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+        padding: var(--spacing-lg);
+    }
+
+    #toastContainer {
+        right: 10px;
+        top: 10px;
+        width: calc(100% - 20px);
+    }
+
+    .toast {
+        min-width: unset;
+        width: 100%;
+    }
+}
+
