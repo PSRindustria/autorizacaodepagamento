@@ -1,34 +1,25 @@
-// Variáveis globais
-let formValidated = false;
+// ========== SCRIPT PARA FORMULÁRIO DE AUTORIZAÇÃO DE PAGAMENTO ==========
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Máscaras
     inicializarMascaras();
 
-    // Progresso
+    // Eventos dos botões
+    document.getElementById("addRowBtn").addEventListener("click", adicionarLinhaTabela);
+    document.getElementById("limparFormBtn").addEventListener("click", limparFormulario);
+    document.getElementById("generatePdfBtn").addEventListener("click", validarEGerarPDF);
+
+    // Validação em tempo real
     document.querySelectorAll("input, textarea, select").forEach((campo) => {
         campo.addEventListener("blur", function () {
             validarCampo(this);
-            atualizarProgressoFormulario();
         });
         campo.addEventListener("input", function () {
             this.classList.remove("input-error");
-            atualizarProgressoFormulario();
         });
     });
 
-    // Botão adicionar item
-    document.getElementById("addRowBtn").addEventListener("click", adicionarLinhaTabela);
-
-    // Botão limpar
-    document.getElementById("limparFormBtn").addEventListener("click", limparFormulario);
-
-    // Botão gerar PDF
-    document.getElementById("generatePdfBtn").addEventListener("click", validarEGerarPDF);
-
-    // Inicial
-    document.querySelector(".form-container").classList.add("fade-in");
-    atualizarProgressoFormulario();
+    // Modal PDF preview
+    inicializarModalPDF();
 });
 
 function inicializarMascaras() {
@@ -72,7 +63,7 @@ function inicializarMascaras() {
             e.target.value = valor;
         });
     }
-    // Valor Total e Unitário
+    // Valores
     aplicarMascaraValor(document.getElementById("totalGeral"));
 }
 
@@ -87,7 +78,7 @@ function aplicarMascaraValor(input) {
     });
 }
 
-// Função para adicionar linhas à tabela de itens
+// Adiciona linha de item
 function adicionarLinhaTabela() {
     const tbody = document.querySelector("#itensTable tbody");
     if (tbody.rows.length >= 20) {
@@ -104,204 +95,260 @@ function adicionarLinhaTabela() {
         <td><button type="button" class="secondary-button removerItemBtn"><i class="fas fa-trash"></i></button></td>
     `;
     tbody.appendChild(novaLinha);
-    novaLinha.classList.add("fade-in");
-    // Máscaras nos valores
     novaLinha.querySelectorAll('.valor-item').forEach(aplicarMascaraValor);
-    // Remover item
     novaLinha.querySelector(".removerItemBtn").addEventListener("click", function () {
         novaLinha.remove();
-        atualizarProgressoFormulario();
     });
-    atualizarProgressoFormulario();
 }
 
-// Validação individual de campo
-function validarCampo(campo) {
-    const id = campo.id;
-    const valor = campo.value.trim();
-    const mensagemValidacao = document.getElementById(`${id}-validation`);
-    let valido = true;
-
-    campo.classList.remove("input-error", "input-success");
-    if (mensagemValidacao) mensagemValidacao.textContent = "";
-
-    // Adapte aqui os campos obrigatórios do seu formulário
-    const obrigatorios = [
-        "cnpjEmpresa", "empresa", "emailSolicitante", "solicitante", "departamento",
-        "dataPagamento", "beneficiario", "cpfCnpjBeneficiario", "banco", "agencia", "conta", "tipoConta", "totalGeral"
-    ];
-
-    if (obrigatorios.includes(id) && !valor) {
-        if (mensagemValidacao) mensagemValidacao.textContent = "Campo obrigatório";
-        valido = false;
-    }
-
-    if (valido && id === "emailSolicitante" && valor && !/^[^@]+@[^@]+\.[^@]+$/.test(valor)) {
-        if (mensagemValidacao) mensagemValidacao.textContent = "E-mail inválido";
-        valido = false;
-    }
-
-    if (valido && id === "cnpjEmpresa" && valor.length < 18) {
-        if (mensagemValidacao) mensagemValidacao.textContent = "CNPJ incompleto";
-        valido = false;
-    }
-
-    if (valido && id === "totalGeral") {
-        const valorNumerico = parseFloat(valor.replace(/\./g, "").replace(",", "."));
-        if (isNaN(valorNumerico) || valorNumerico <= 0) {
-            if (mensagemValidacao) mensagemValidacao.textContent = "Valor inválido";
-            valido = false;
-        }
-    }
-
-    if (!valido) campo.classList.add("input-error");
-    else if (valor) campo.classList.add("input-success");
-
-    return valido;
-}
-
-function validarFormulario() {
-    const camposValidaveis = document.querySelectorAll("#autorizacaoForm input:not([type='checkbox']), #autorizacaoForm textarea, #autorizacaoForm select");
-    let formValido = true;
-
-    camposValidaveis.forEach((campo) => {
-        const obrigatorios = [
-            "cnpjEmpresa", "empresa", "emailSolicitante", "solicitante", "departamento",
-            "dataPagamento", "beneficiario", "cpfCnpjBeneficiario", "banco", "agencia", "conta", "tipoConta", "totalGeral"
-        ];
-        if (obrigatorios.includes(campo.id) || campo.value.trim() !== "") {
-            if (!validarCampo(campo)) {
-                formValido = false;
-            }
-        }
-    });
-
-    // Forma de pagamento: ao menos um checkbox marcado
-    const checkboxes = document.querySelectorAll("input[name='formaPagamento']:checked");
-    const validacaoFormaPagamento = document.getElementById("formaPagamento-validation");
-    if (checkboxes.length === 0) {
-        if (validacaoFormaPagamento) validacaoFormaPagamento.textContent = "Selecione ao menos uma forma de pagamento";
-        formValido = false;
-    } else {
-        if (validacaoFormaPagamento) validacaoFormaPagamento.textContent = "";
-    }
-
-    return formValido;
-}
-
-function atualizarProgressoFormulario() {
-    const camposObrigatorios = [
-        "cnpjEmpresa", "empresa", "emailSolicitante", "solicitante", "departamento",
-        "dataPagamento", "beneficiario", "cpfCnpjBeneficiario", "banco", "agencia", "conta", "tipoConta", "totalGeral"
-    ];
-    let preenchidos = 0;
-    const totalObrigatorios = camposObrigatorios.length + 1;
-
-    camposObrigatorios.forEach(id => {
-        const campo = document.getElementById(id);
-        if (campo && campo.value.trim() !== "") preenchidos++;
-    });
-
-    if (document.querySelectorAll("input[name='formaPagamento']:checked").length > 0) preenchidos++;
-
-    const progresso = (preenchidos / totalObrigatorios) * 100;
-    document.getElementById("formProgress").style.width = `${Math.min(progresso, 100)}%`;
-}
-
-// Limpar formulário
+// Limpa o formulário
 function limparFormulario() {
     document.getElementById("autorizacaoForm").reset();
     document.querySelectorAll(".validation-message").forEach((msg) => { msg.textContent = ""; });
     document.querySelectorAll(".input-error, .input-success").forEach((campo) => {
         campo.classList.remove("input-error", "input-success");
     });
-    document.getElementById("formProgress").style.width = "0%";
-    // Limpa tabela de itens
     document.querySelector("#itensTable tbody").innerHTML = "";
     mostrarToast("Formulário limpo com sucesso", "success");
 }
 
-// Toast de feedback
+// Toasts
 function mostrarToast(mensagem, tipo = "success") {
-    const toastContainer = document.getElementById("toastContainer");
+    let toastContainer = document.getElementById("toastContainer");
     if (!toastContainer) {
-        alert(mensagem);
-        return;
+        toastContainer = document.createElement("div");
+        toastContainer.id = "toastContainer";
+        toastContainer.style.position = "fixed";
+        toastContainer.style.top = "20px";
+        toastContainer.style.right = "20px";
+        toastContainer.style.zIndex = "1000";
+        document.body.appendChild(toastContainer);
     }
-
     const toast = document.createElement("div");
     toast.className = `toast ${tipo}`;
-    toast.innerHTML = `
-        <i class="fas fa-info-circle toast-icon"></i>
-        <span class="toast-message">${mensagem}</span>
-        <div class="toast-progress"></div>
-    `;
+    toast.innerHTML = `<span>${mensagem}</span>`;
     toastContainer.appendChild(toast);
-    toast.offsetHeight;
-    toast.classList.add("show");
-    const progressElement = toast.querySelector(".toast-progress");
-    setTimeout(() => {
-        if (progressElement) progressElement.style.width = "100%";
-    }, 100);
-
-    setTimeout(() => {
-        toast.classList.remove("show");
-        toast.addEventListener("transitionend", () => {
-            if (toast.parentNode) toast.parentNode.removeChild(toast);
-        });
-    }, 3000);
+    setTimeout(() => { toast.classList.add("show"); }, 10);
+    setTimeout(() => { toast.classList.remove("show"); toast.remove(); }, 3000);
 }
 
-// Coleta de dados e chamada para gerar PDF
-function validarEGerarPDF() {
-    if (validarFormulario()) {
-        // Aqui você pode chamar a função de geração de PDF, por enquanto apenas mostra os dados no console
-        const dados = coletarDadosFormulario();
-        console.log(dados);
-        mostrarToast("Dados prontos para gerar PDF", "success");
-        // Chame aqui a função de gerar o PDF
-        // gerarPDF(dados);
-        formValidated = true;
+// Validação simples (pode aprimorar conforme necessidade)
+function validarCampo(campo) {
+    const id = campo.id;
+    const valor = campo.value.trim();
+    const obrigatorios = [
+        "cnpjEmpresa", "empresa", "emailSolicitante", "solicitante", "departamento",
+        "dataPagamento", "beneficiario", "cpfCnpjBeneficiario", "banco", "agencia", "conta", "tipoConta", "totalGeral"
+    ];
+    if (obrigatorios.includes(id) && !valor) {
+        campo.classList.add("input-error");
+        return false;
     } else {
-        mostrarToast("Por favor, corrija os erros no formulário", "error");
-        const primeiroErro = document.querySelector(".input-error");
-        if (primeiroErro) primeiroErro.scrollIntoView({ behavior: "smooth", block: "center" });
+        campo.classList.remove("input-error");
+        return true;
     }
 }
 
-// Coleta todos os dados do formulário
-function coletarDadosFormulario() {
-    // Coleta checkboxes forma de pagamento
-    const formasPagamento = Array.from(document.querySelectorAll("input[name='formaPagamento']:checked")).map(c => c.value);
-    // Coleta itens da tabela
-    const linhas = document.querySelectorAll("#itensTable tbody tr");
-    const itens = Array.from(linhas).map(linha => ({
-        codigo: linha.querySelector("input[name='itemCodigo[]']").value,
-        descricao: linha.querySelector("input[name='itemDescricao[]']").value,
-        quantidade: linha.querySelector("input[name='itemQuantidade[]']").value,
-        valorUnitario: linha.querySelector("input[name='itemValorUnitario[]']").value,
-        valorTotal: linha.querySelector("input[name='itemValorTotal[]']").value,
-    }));
+// Validação de todos os campos obrigatórios antes de gerar o PDF
+function validarFormulario() {
+    let ok = true;
+    document.querySelectorAll("input, textarea, select").forEach((campo) => {
+        if (!validarCampo(campo)) ok = false;
+    });
+    // Pelo menos uma forma de pagamento
+    const checked = Array.from(document.querySelectorAll("input[name='formaPagamento']:checked"));
+    if (checked.length === 0) {
+        mostrarToast("Selecione pelo menos uma forma de pagamento", "error");
+        ok = false;
+    }
+    return ok;
+}
 
-    return {
-        cnpjEmpresa: document.getElementById("cnpjEmpresa").value,
-        empresa: document.getElementById("empresa").value,
-        emailSolicitante: document.getElementById("emailSolicitante").value,
-        solicitante: document.getElementById("solicitante").value,
-        departamento: document.getElementById("departamento").value,
-        formasPagamento,
-        dataPagamento: document.getElementById("dataPagamento").value,
-        ordemCompra: document.getElementById("ordemCompra").value,
-        centroCusto: document.getElementById("centroCusto").value,
-        observacaoFinalidade: document.getElementById("observacaoFinalidade").value,
-        itens,
-        beneficiario: document.getElementById("beneficiario").value,
-        cpfCnpjBeneficiario: document.getElementById("cpfCnpjBeneficiario").value,
-        banco: document.getElementById("banco").value,
-        agencia: document.getElementById("agencia").value,
-        conta: document.getElementById("conta").value,
-        tipoConta: document.getElementById("tipoConta").value,
-        chavePix: document.getElementById("chavePix").value,
-        totalGeral: document.getElementById("totalGeral").value,
-    };
+// Validação + Geração do PDF
+function validarEGerarPDF() {
+    if (validarFormulario()) {
+        gerarPDF();
+    } else {
+        mostrarToast("Por favor, corrija os campos obrigatórios.", "error");
+    }
+}
+
+// Utilitário: carrega logo como base64
+function loadImageAsBase64(url) {
+    return new Promise((resolve, reject) => {
+        const img = new window.Image();
+        img.setAttribute('crossOrigin', 'anonymous');
+        img.onload = function () {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = reject;
+        img.src = url;
+    });
+}
+
+// Função principal de geração de PDF
+async function gerarPDF() {
+    mostrarToast("Gerando PDF...", "info");
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+    // Logo centralizada
+    const logoBase64 = await loadImageAsBase64("https://i.postimg.cc/v8nRpXB7/logo.png");
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const logoWidth = 60;
+    const logoHeight = 17;
+    const logoX = (pageWidth - logoWidth) / 2;
+    doc.addImage(logoBase64, 'PNG', logoX, 8, logoWidth, logoHeight);
+
+    // Cabeçalho
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.text("FORMULÁRIO DE AUTORIZAÇÃO DE PAGAMENTO", pageWidth / 2, 27, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("FOR_FIN_02_01", 170, 13);
+    doc.text("VERSÃO: 01", 170, 17);
+    doc.setLineWidth(0.3);
+    doc.line(10, 32, 200, 32);
+
+    // Dados principais
+    let y = 38;
+    function addField(label, value) {
+        doc.setFont("helvetica", "bold");
+        doc.text(label, 12, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(value || ""), 70, y);
+        y += 6;
+    }
+    addField("CNPJ:", document.getElementById("cnpjEmpresa").value);
+    addField("EMPRESA:", document.getElementById("empresa").value);
+    addField("E-MAIL:", document.getElementById("emailSolicitante").value);
+    addField("SOLICITANTE:", document.getElementById("solicitante").value);
+    addField("DEPARTAMENTO:", document.getElementById("departamento").value);
+
+    // Forma de pagamento
+    y += 2;
+    doc.setFont("helvetica", "bold");
+    doc.text("FORMA DE PAGAMENTO:", 12, y);
+    doc.setFont("helvetica", "normal");
+    let checkX = 60, checkY = y - 3, box = 4;
+    const formas = [
+        { id: "pgtoPixTed", label: "PIX/TED" },
+        { id: "pgtoBoleto", label: "BOLETO" },
+        { id: "pgtoAdiantado", label: "PAGO ADIANTADO" }
+    ];
+    formas.forEach((f, i) => {
+        doc.rect(checkX + (i * 33), checkY, box, box);
+        if (document.getElementById(f.id).checked) {
+            doc.setFont("helvetica", "bold");
+            doc.text("X", checkX + (i * 33) + 1.4, checkY + 3.2);
+            doc.setFont("helvetica", "normal");
+        }
+        doc.text(f.label, checkX + (i * 33) + 6, checkY + 3);
+    });
+    y += 8;
+    addField("DATA PARA PAGAMENTO:", document.getElementById("dataPagamento").value);
+    addField("ORDEM DE COMPRA:", document.getElementById("ordemCompra").value);
+    addField("CENTRO DE CUSTO:", document.getElementById("centroCusto").value);
+
+    // Finalidade/Observação
+    y += 4;
+    doc.setFont("helvetica", "bold");
+    doc.text("OBSERVAÇÃO / FINALIDADE:", 12, y);
+    doc.setFont("helvetica", "normal");
+    const obs = document.getElementById("observacaoFinalidade").value || "";
+    doc.text(doc.splitTextToSize(obs, 120), 12, y + 6);
+    y += 15;
+
+    // Tabela Itens/Serviços (com jsPDF-AutoTable)
+    doc.setFont("helvetica", "bold");
+    doc.text("ITENS / SERVIÇOS:", 12, y);
+    y += 4;
+    doc.setFontSize(8);
+
+    // Coleta itens da tabela
+    const itens = Array.from(document.querySelectorAll("#itensTable tbody tr")).map(tr => [
+        tr.querySelector("input[name='itemCodigo[]']").value,
+        tr.querySelector("input[name='itemDescricao[]']").value,
+        tr.querySelector("input[name='itemQuantidade[]']").value,
+        tr.querySelector("input[name='itemValorUnitario[]']").value,
+        tr.querySelector("input[name='itemValorTotal[]']").value
+    ]);
+
+    doc.autoTable({
+        startY: y,
+        head: [['CÓDIGO', 'DESCRIÇÃO', 'QUANT.', 'V.UNIT.', 'V.TOTAL']],
+        body: itens,
+        margin: { left: 12, right: 12 },
+        headStyles: { fillColor: [200, 200, 200] },
+        theme: 'grid',
+        styles: { font: "helvetica", fontSize: 8, cellPadding: 1.5 },
+    });
+    y = doc.lastAutoTable.finalY + 6;
+
+    // Dados para pagamento
+    doc.setFont("helvetica", "bold");
+    doc.text("DADOS PARA PAGAMENTO:", 12, y);
+    y += 4;
+    doc.setFont("helvetica", "normal");
+    addField("BENEFICIÁRIO:", document.getElementById("beneficiario").value);
+    addField("CPF / CNPJ:", document.getElementById("cpfCnpjBeneficiario").value);
+    addField("BANCO:", document.getElementById("banco").value);
+    addField("AGÊNCIA:", document.getElementById("agencia").value);
+    addField("CONTA:", document.getElementById("conta").value);
+    addField("TIPO DE CONTA:", document.getElementById("tipoConta").value);
+    addField("CHAVE PIX:", document.getElementById("chavePix").value);
+
+    // Total Geral
+    y += 2;
+    doc.setFont("helvetica", "bold");
+    doc.text("TOTAL GERAL:", 130, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(document.getElementById("totalGeral").value, 160, y);
+
+    // Assinatura
+    y += 18;
+    doc.setFont("helvetica", "normal");
+    doc.line(12, y, 70, y);
+    doc.text("Solicitante", 12, y + 5);
+
+    // Preview em modal + download
+    window.pdfDoc = doc; // global para download
+    try {
+        const pdfData = doc.output("datauristring");
+        document.getElementById("pdfContainer").innerHTML = `<embed width="100%" height="100%" src="${pdfData}" type="application/pdf">`;
+        document.getElementById("pdfPreview").classList.add("active");
+        mostrarToast("PDF gerado com sucesso!", "success");
+    } catch (e) {
+        mostrarToast("Erro ao gerar preview do PDF.", "error");
+    }
+}
+
+// Modal PDF Preview + Download
+function inicializarModalPDF() {
+    if (!document.getElementById("pdfPreview")) {
+        const modal = document.createElement("div");
+        modal.id = "pdfPreview";
+        modal.className = "modal-overlay";
+        modal.innerHTML = `
+            <div class="modal-content" style="width: 80%; height: 80%; background: white; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative;">
+                <button id="closePdfPreview" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 16px; line-height: 25px; text-align: center;">×</button>
+                <div id="pdfContainer" style="width: 100%; height: calc(100% - 40px); margin-top: 30px;"></div>
+                <button id="downloadPdfBtn" style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); background: #2471a3; color: white; padding: 8px 22px; border: none; border-radius: 6px; font-size: 15px; cursor: pointer;">Baixar PDF</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        document.getElementById("closePdfPreview").onclick = function () {
+            modal.classList.remove("active");
+        };
+        document.getElementById("downloadPdfBtn").onclick = function () {
+            if (window.pdfDoc) window.pdfDoc.save("autorizacao_pagamento.pdf");
+        };
+    }
 }
