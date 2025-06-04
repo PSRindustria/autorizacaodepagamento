@@ -1,54 +1,54 @@
 /* ========================================
-   VARIÁVEIS CSS - DESIGN SYSTEM
+   VARIÁVEIS CSS - DESIGN SYSTEM (Mantidas)
    ======================================== */
 :root {
     /* Cores Principais */
     --primary-color: #0056b3;
     --primary-hover: #003d82;
     --primary-light: rgba(0, 86, 179, 0.1);
-    
+
     /* Cores Secundárias */
     --secondary-color: #f8f9fa;
     --accent-color: #17a2b8;
-    
+
     /* Cores de Estado */
     --success-color: #28a745;
     --error-color: #dc3545;
     --warning-color: #ffc107;
     --info-color: #17a2b8;
-    
+
     /* Cores de Texto */
     --text-primary: #212529;
     --text-secondary: #6c757d;
     --text-muted: #868e96;
-    
+
     /* Cores de Fundo */
     --bg-primary: #ffffff;
     --bg-secondary: #f8f9fa;
     --bg-light: #f5f5f5;
-    
+
     /* Bordas */
     --border-color: #dee2e6;
     --border-light: #e9ecef;
     --border-radius: 8px;
     --border-radius-sm: 4px;
-    
+
     /* Sombras */
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.15);
-    
+
     /* Transições */
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: all 0.15s ease;
-    
+
     /* Espaçamentos */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
     --spacing-xl: 32px;
-    
+
     /* Tipografia */
     --font-family: 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-size-xs: 11px;
@@ -57,7 +57,7 @@
     --font-size-lg: 16px;
     --font-size-xl: 18px;
     --font-size-2xl: 20px;
-    
+
     --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
@@ -65,7 +65,7 @@
 }
 
 /* ========================================
-   RESET E BASE STYLES
+   RESET E BASE STYLES (Mantidos)
    ======================================== */
 * {
     box-sizing: border-box;
@@ -85,7 +85,7 @@ body {
 }
 
 /* ========================================
-   CONTAINER PRINCIPAL
+   CONTAINER PRINCIPAL (Mantido)
    ======================================== */
 .container {
     max-width: 1000px;
@@ -94,16 +94,6 @@ body {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     overflow: hidden;
-}
-
-.form-container {
-    /* Adicionado para animação */
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-}
-
-.form-container.fade-in {
-    opacity: 1;
 }
 
 /* ========================================
@@ -126,9 +116,9 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, 
-        var(--success-color) 0%, 
-        var(--info-color) 50%, 
+    background: linear-gradient(90deg,
+        var(--success-color) 0%,
+        var(--info-color) 50%,
         var(--warning-color) 100%);
 }
 
@@ -185,9 +175,9 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(90deg, 
-        transparent 0%, 
-        rgba(255, 255, 255, 0.3) 50%, 
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.3) 50%,
         transparent 100%);
     animation: shimmer 2s infinite;
 }
@@ -198,7 +188,7 @@ body {
 }
 
 /* ========================================
-   SEÇÕES DO FORMULÁRIO
+   SEÇÕES DO FORMULÁRIO (Mantidas)
    ======================================== */
 .form-section {
     padding: var(--spacing-xl);
@@ -215,7 +205,7 @@ body {
 }
 
 /* ========================================
-   TÍTULOS DE SEÇÃO
+   TÍTULOS DE SEÇÃO (Mantidos)
    ======================================== */
 .section-title {
     display: flex;
@@ -251,7 +241,7 @@ body {
 }
 
 /* ========================================
-   LAYOUT DE FORMULÁRIO
+   LAYOUT DE FORMULÁRIO (Mantido)
    ======================================== */
 .form-row {
     display: flex;
@@ -263,11 +253,8 @@ body {
     flex: 1;
     min-width: 0;
     position: relative;
-    margin-bottom: var(--spacing-md); /* Adicionado espaço entre labels/inputs */
-}
-
-.form-group:last-child {
-    margin-bottom: 0;
+    /* Adicionado espaçamento inferior para labels não colarem nos inputs */
+    margin-bottom: var(--spacing-md);
 }
 
 .form-group.half {
@@ -279,7 +266,7 @@ body {
 }
 
 /* ========================================
-   CAMPOS DE FORMULÁRIO
+   CAMPOS DE FORMULÁRIO (Mantidos com ajustes)
    ======================================== */
 label {
     display: flex;
@@ -330,7 +317,7 @@ textarea.input-animated {
     line-height: 1.5;
 }
 
-/* Input com Prefixo */
+/* Input com Prefixo (Mantido) */
 .input-prefix {
     position: relative;
     display: flex;
@@ -344,7 +331,6 @@ textarea.input-animated {
     font-weight: var(--font-weight-medium);
     font-size: var(--font-size-base);
     z-index: 1;
-    pointer-events: none; /* Para não interferir no clique do input */
 }
 
 .input-prefix input {
@@ -352,12 +338,12 @@ textarea.input-animated {
 }
 
 /* ========================================
-   CHECKBOXES (Novo)
+   CHECKBOXES (Novo - baseado em Radio)
    ======================================== */
 .checkbox-group {
     display: flex;
     flex-direction: column; /* Empilhar verticalmente */
-    gap: var(--spacing-sm); /* Espaço entre opções */
+    gap: var(--spacing-sm); /* Espaçamento menor */
     margin-top: var(--spacing-sm);
 }
 
@@ -365,19 +351,18 @@ textarea.input-animated {
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: var(--spacing-xs) 0; /* Menor padding vertical */
+    padding: var(--spacing-xs) 0; /* Menos padding vertical */
     transition: var(--transition);
 }
 
 .checkbox-option:hover {
-    /* Opcional: adicionar um leve destaque */
-    /* background-color: var(--primary-light); */
+    /* background-color: var(--primary-light); Opcional */
 }
 
 .checkbox-option input[type="checkbox"] {
     margin-right: var(--spacing-sm);
     cursor: pointer;
-    transform: scale(1.1);
+    transform: scale(1.2);
 }
 
 .checkbox-label {
@@ -451,12 +436,12 @@ textarea.input-animated {
 }
 
 /* ========================================
-   TABELAS (Ajustado para Itens)
+   TABELAS (Ajustado para nova tabela)
    ======================================== */
 .table-container {
     margin: var(--spacing-lg) 0;
     border-radius: var(--border-radius-sm);
-    overflow-x: auto; /* Permitir rolagem horizontal se necessário */
+    overflow: hidden;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
 }
@@ -469,21 +454,21 @@ table {
 
 th {
     background: linear-gradient(135deg, var(--secondary-color), #e9ecef);
-    padding: var(--spacing-sm) var(--spacing-md); /* Padding ajustado */
+    padding: var(--spacing-sm) var(--spacing-md); /* Menor padding */
     text-align: left;
     font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
-    font-size: var(--font-size-xs); /* Fonte menor para caber mais colunas */
+    font-size: var(--font-size-xs); /* Fonte menor para cabecalho */
     border-bottom: 2px solid var(--border-color);
     white-space: nowrap; /* Evitar quebra de linha no cabeçalho */
 }
 
 td {
-    padding: var(--spacing-sm) var(--spacing-md); /* Padding ajustado */
+    padding: var(--spacing-sm) var(--spacing-md); /* Menor padding */
     border-bottom: 1px solid var(--border-light);
     transition: var(--transition-fast);
+    vertical-align: middle; /* Alinhar verticalmente */
     font-size: var(--font-size-sm);
-    vertical-align: middle; /* Alinhar conteúdo verticalmente */
 }
 
 tr:hover td {
@@ -492,10 +477,10 @@ tr:hover td {
 
 td input,
 td select {
-    border: 1px solid transparent; /* Borda sutil */
+    border: 1px solid var(--border-light); /* Borda leve para inputs na tabela */
     background: transparent;
     width: 100%;
-    padding: var(--spacing-xs) 0; /* Padding menor */
+    padding: var(--spacing-xs);
     font-size: var(--font-size-sm);
     color: inherit;
     border-radius: var(--border-radius-sm);
@@ -503,16 +488,15 @@ td select {
 
 td input:focus,
 td select:focus {
-    outline: none;
+    outline: 1px solid var(--primary-color);
     border-color: var(--primary-color);
-    background-color: white; /* Fundo branco ao focar */
-    box-shadow: 0 0 0 2px var(--primary-light);
+    background-color: white;
 }
 
 /* Ajustes específicos para colunas da tabela de itens */
 #itensTable th:nth-child(1), /* Código */
 #itensTable td:nth-child(1) {
-    width: 10%;
+    width: 15%;
 }
 
 #itensTable th:nth-child(2), /* Descrição */
@@ -523,7 +507,7 @@ td select:focus {
 #itensTable th:nth-child(3), /* Qtd */
 #itensTable td:nth-child(3) {
     width: 10%;
-    text-align: right;
+    text-align: center;
 }
 
 #itensTable th:nth-child(4), /* V. Unitário */
@@ -536,28 +520,27 @@ td select:focus {
 #itensTable td:nth-child(5) {
     width: 15%;
     text-align: right;
-    font-weight: var(--font-weight-medium);
 }
 
 #itensTable th:nth-child(6), /* Ações */
 #itensTable td:nth-child(6) {
-    width: 15%;
+    width: 10%;
     text-align: center;
 }
 
-.delete-row-btn {
+.remove-row-btn {
     background: none;
     border: none;
     color: var(--error-color);
     cursor: pointer;
-    font-size: 1.1em;
-    padding: var(--spacing-xs);
+    font-size: 1.2em;
+    padding: 0 var(--spacing-sm);
     transition: var(--transition-fast);
 }
 
-.delete-row-btn:hover {
+.remove-row-btn:hover {
     color: darkred;
-    transform: scale(1.2);
+    transform: scale(1.1);
 }
 
 /* ========================================
@@ -566,15 +549,16 @@ td select:focus {
 .total-section {
     display: flex;
     flex-direction: column;
+    justify-content: flex-end; /* Alinhar ao fundo */
     align-items: flex-end; /* Alinhar à direita */
-    justify-content: center; /* Centralizar verticalmente (se houver espaço) */
     padding-top: var(--spacing-xl); /* Espaço acima do total */
 }
 
 .total-section label {
-    margin-bottom: var(--spacing-sm);
-    font-size: var(--font-size-lg); /* Tamanho maior para o label Total */
+    font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
 }
 
 .total-display {
@@ -583,31 +567,34 @@ td select:focus {
     background-color: var(--bg-secondary);
     padding: var(--spacing-md);
     border-radius: var(--border-radius-sm);
-    border: 1px solid var(--border-light);
-    min-width: 150px; /* Largura mínima */
-    justify-content: flex-end;
+    border: 2px solid var(--primary-color);
 }
 
 .total-display span {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-color);
     margin-right: var(--spacing-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--text-secondary);
 }
 
 .total-display input {
-    font-size: var(--font-size-xl); /* Tamanho maior para o valor */
+    font-size: var(--font-size-xl);
     font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
-    text-align: right;
+    color: var(--primary-color);
     border: none;
     background: transparent;
+    text-align: right;
     padding: 0;
-    width: auto; /* Ajustar largura ao conteúdo */
+    width: auto; /* Ajustar largura automaticamente */
     min-width: 100px;
 }
 
+.total-display input:focus {
+    outline: none;
+}
+
 /* ========================================
-   BOTÕES
+   BOTÕES (Mantidos)
    ======================================== */
 .primary-button {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
@@ -633,9 +620,9 @@ td select:focus {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.2), 
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
         transparent);
     transition: left 0.5s;
 }
@@ -681,14 +668,14 @@ td select:focus {
 }
 
 /* ========================================
-   ASSINATURAS (Removido - não presente no novo PDF)
+   ASSINATURAS (Removido - Não presente no FOR_FIN_02_01)
    ======================================== */
 /* .signatures { ... } */
 /* .signature-field { ... } */
 /* .signature-line { ... } */
 
 /* ========================================
-   AÇÕES DO FORMULÁRIO
+   AÇÕES DO FORMULÁRIO (Mantido)
    ======================================== */
 .form-actions {
     display: flex;
@@ -700,7 +687,7 @@ td select:focus {
 }
 
 /* ========================================
-   ESTADOS DE VALIDAÇÃO
+   ESTADOS DE VALIDAÇÃO (Mantidos)
    ======================================== */
 .input-error {
     border-color: var(--error-color) !important;
@@ -724,41 +711,36 @@ td select:focus {
 .validation-message::before {
     content: '⚠';
     margin-right: var(--spacing-xs);
-    display: none; /* Ocultar por padrão */
+    /* Ocultar ícone se não houver mensagem */
+    display: inline-block;
+    visibility: hidden;
 }
 
-.input-error + .validation-message::before,
-.checkbox-group.input-error ~ .validation-message::before {
-    display: inline; /* Mostrar ícone apenas em erro */
-}
-
-.input-error + .validation-message,
-.checkbox-group.input-error ~ .validation-message {
-    color: var(--error-color);
+.validation-message:not(:empty)::before {
+    visibility: visible;
 }
 
 /* ========================================
-   TOASTS / NOTIFICAÇÕES (Novo ou Adaptado)
+   TOASTS / NOTIFICAÇÕES (Mantido)
    ======================================== */
 #toastContainer {
     position: fixed;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
-    z-index: 1050;
+    z-index: 1000;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
 }
 
 .toast {
     background-color: var(--text-primary);
     color: white;
-    padding: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius-sm);
     box-shadow: var(--shadow-lg);
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
     opacity: 0;
     transform: translateX(100%);
     transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
@@ -772,12 +754,8 @@ td select:focus {
     transform: translateX(0);
 }
 
-.toast.success { background-color: var(--success-color); }
-.toast.error { background-color: var(--error-color); }
-.toast.warning { background-color: var(--warning-color); color: var(--text-primary); }
-.toast.info { background-color: var(--info-color); }
-
 .toast-icon {
+    margin-right: var(--spacing-md);
     font-size: 1.2em;
 }
 
@@ -786,123 +764,83 @@ td select:focus {
     font-size: var(--font-size-sm);
 }
 
+.toast.success {
+    background-color: var(--success-color);
+}
+
+.toast.error {
+    background-color: var(--error-color);
+}
+
+.toast.warning {
+    background-color: var(--warning-color);
+    color: var(--text-primary);
+}
+
+.toast.info {
+    background-color: var(--info-color);
+}
+
 .toast-progress {
     position: absolute;
     bottom: 0;
     left: 0;
     height: 4px;
     width: 0;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(255, 255, 255, 0.5);
     transition: width 3s linear;
 }
 
 /* ========================================
-   MODAL DE PREVIEW PDF (Novo ou Adaptado)
+   ANIMAÇÕES E UTILITÁRIOS (Mantidos)
    ======================================== */
-.modal {
-    display: none; /* Oculto por padrão */
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.6);
-    animation: fadeInModal 0.3s ease;
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
 }
 
-.modal-content {
-    background-color: var(--bg-primary);
-    margin: 5% auto;
-    padding: var(--spacing-xl);
-    border: 1px solid var(--border-light);
-    width: 80%;
-    max-width: 900px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-lg);
-    position: relative;
-}
-
-.close-button {
-    color: var(--text-muted);
-    position: absolute;
-    top: var(--spacing-md);
-    right: var(--spacing-lg);
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: var(--transition-fast);
-}
-
-.close-button:hover,
-.close-button:focus {
-    color: var(--text-primary);
-    text-decoration: none;
-}
-
-.modal-content h2 {
-    margin-bottom: var(--spacing-lg);
-    color: var(--primary-color);
-    font-weight: var(--font-weight-semibold);
-}
-
-#pdfPreviewFrame {
-    border: 1px solid var(--border-color);
-    margin-bottom: var(--spacing-lg);
-}
-
-@keyframes fadeInModal {
-    from { opacity: 0; }
-    to { opacity: 1; }
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ========================================
-   RESPONSIVIDADE
+   RESPONSIVIDADE (Mantida)
    ======================================== */
 @media (max-width: 768px) {
     body {
         padding: var(--spacing-md);
     }
-    
+
     .container {
         margin: 0;
     }
-    
+
     .header {
         flex-direction: column;
         text-align: center;
         padding: var(--spacing-lg);
     }
-        
+
     .form-info {
         margin-top: var(--spacing-md);
         text-align: center;
         flex: none;
     }
-    
+
     .form-row {
         flex-direction: column;
-        gap: 0; /* Remover gap em coluna */
+        gap: 0; /* Remover gap na coluna */
     }
-    
+
     .form-group.half {
-        flex: 1 1 100%; /* Ocupar largura total */
-        margin-bottom: var(--spacing-lg); /* Adicionar espaço inferior */
-    }
-
-    .form-group.half:last-child {
-        margin-bottom: 0;
-    }
-    
-    .total-section {
-        align-items: flex-start; /* Alinhar total à esquerda */
-        margin-top: var(--spacing-lg);
-    }
-
-    .total-display {
-        width: 100%;
-        justify-content: space-between;
+        flex: 1 1 100%;
+        /* Remover ajuste de gap que não se aplica mais */
     }
 
     .form-actions {
@@ -910,21 +848,25 @@ td select:focus {
         gap: var(--spacing-md);
     }
 
-    .modal-content {
-        width: 95%;
-        margin: 10% auto;
-        padding: var(--spacing-lg);
+    .checkbox-group {
+       flex-direction: row; /* Checkboxes lado a lado em mobile se couber */
+       flex-wrap: wrap;
+       gap: var(--spacing-md);
     }
 
-    #toastContainer {
-        right: 10px;
-        top: 10px;
-        width: calc(100% - 20px);
+    #itensTable th,
+    #itensTable td {
+        padding: var(--spacing-sm);
+        font-size: var(--font-size-xs);
     }
 
-    .toast {
-        min-width: unset;
-        width: 100%;
+    /* Ocultar colunas menos importantes em telas pequenas se necessário */
+    /* Exemplo: Ocultar código do item */
+    /*
+    #itensTable th:nth-child(1),
+    #itensTable td:nth-child(1) {
+        display: none;
     }
+    */
 }
 

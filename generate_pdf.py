@@ -5,7 +5,7 @@ import json
 import sys
 
 # Helper function to safely get data
-def get_data(data_dict, key, default="): # Default to empty string
+def get_data(data_dict, key, default=""): # Default to empty string
     # Handles nested keys like 'item.codigo'
     keys = key.split(".")
     val = data_dict
@@ -67,7 +67,8 @@ def draw_table(pdf, start_x, start_y, table_data, col_widths, row_height, header
         if i == 2: align = "C" # Quantity centered
         if i > 2: align = "R" # Values right-aligned
         pdf.set_xy(x_positions[i] + 1, current_y + 1) # Padding
-        pdf.multi_cell(col_widths[i] - 2, header_height - 2, txt=header, border=0, align=align, ln=3)
+        # Removed ln=3 from multi_cell
+        pdf.multi_cell(col_widths[i] - 2, header_height - 2, txt=header, border=0, align=align)
     current_y += header_height
 
     # Draw Rows
@@ -88,7 +89,8 @@ def draw_table(pdf, start_x, start_y, table_data, col_widths, row_height, header
                 if i == 2: align = "C"
                 if i > 2: align = "R"
                 pdf.set_xy(x_positions[i] + 1, current_y + 1)
-                pdf.multi_cell(col_widths[i] - 2, header_height - 2, txt=header, border=0, align=align, ln=3)
+                # Removed ln=3 from multi_cell
+                pdf.multi_cell(col_widths[i] - 2, header_height - 2, txt=header, border=0, align=align)
             current_y += header_height
             pdf.set_font("Helvetica", "", 8)
 
@@ -361,114 +363,93 @@ def create_pdf(data, output_path):
     pdf.cell(col_width - 25, line_height, get_data(data, "chavePix"), ln=1)
     end_y_col1_sec3 = current_y + line_height
 
-    # Coluna 2: Total
-    total_y = start_y_sec3 # Align total with start of this section
-    pdf.set_y(total_y)
-    pdf.set_x(col2_x)
+    # Coluna 2: Total Geral
+    current_y = start_y_sec3
+    pdf.set_y(current_y)
     pdf.set_font("Helvetica", "B", base_font_size)
-    pdf.set_text_color(*label_color)
-    pdf.cell(col_width, line_height * 1.5, "TOTAL", align="R", ln=1)
-
-    pdf.set_x(col2_x)
-    pdf.set_font("Helvetica", "B", section_title_size) # Larger font for total value
     pdf.set_text_color(*value_color)
-    pdf.cell(col_width, line_height * 1.5, format_currency(get_data(data, "valorTotalGeral")), align="R", ln=1)
-    end_y_col2_sec3 = pdf.get_y()
+    pdf.set_x(col2_x)
+    pdf.cell(col_width, line_height * 2, "TOTAL GERAL", border=1, align="C", ln=1)
+    current_y += line_height * 2
 
-    # --- Assinaturas (Placeholder) ---
-    current_y = max(end_y_col1_sec3, end_y_col2_sec3) + 15
-    if current_y + 20 > page_height - margin: # Check if signatures fit
-        pdf.add_page()
-        current_y = margin
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.set_x(col2_x)
+    pdf.cell(col_width, line_height * 3, format_currency(get_data(data, "totalGeral")), border=1, align="C", ln=1)
+    end_y_col2_sec3 = current_y + line_height * 3
 
+    current_y = max(end_y_col1_sec3, end_y_col2_sec3) + 5
     pdf.set_y(current_y)
+
+    # --- Seção: Observações Gerais ---
+    pdf.set_font("Helvetica", "B", base_font_size)
+    pdf.set_x(margin)
+    pdf.cell(page_width, line_height, "OBSERVAÇÕES GERAIS", border="B", ln=1)
+    current_y += line_height + field_sep
+    pdf.set_y(current_y)
+
     pdf.set_font("Helvetica", "", small_font_size)
-    sig_width = page_width / 3 - margin / 2
-    sig_y = current_y + 10 # Y position for the signature line itself
-
-    # Solicitante
     pdf.set_x(margin)
-    pdf.line(margin, sig_y, margin + sig_width, sig_y)
-    pdf.set_x(margin)
-    pdf.cell(sig_width, 5, get_data(data, "solicitante"), align="C", ln=1)
-    pdf.set_x(margin)
-    pdf.cell(sig_width, 5, "Solicitante", align="C", ln=2)
+    pdf.multi_cell(page_width, 3.5, txt=get_data(data, "observacoesGerais"), border=1, align="L") # Removed fixed height h=20
+    current_y = pdf.get_y() + 2
 
-    # Aprovador 1 (Placeholder)
-    sig_x_2 = margin + sig_width + margin
-    pdf.set_y(current_y)
-    pdf.line(sig_x_2, sig_y, sig_x_2 + sig_width, sig_y)
-    pdf.set_xy(sig_x_2, sig_y + 1)
-    pdf.cell(sig_width, 5, "_________________________", align="C", ln=1)
-    pdf.set_x(sig_x_2)
-    pdf.cell(sig_width, 5, "Aprovador", align="C", ln=2)
+    # --- Seção: Assinaturas ---
+    signature_y = pdf.h - margin - 20 # Position near bottom
+    if current_y > signature_y - 10: # Add page if too close
+        pdf.add_page()
+        signature_y = pdf.h - margin - 20
 
-    # Aprovador 2 (Placeholder)
-    sig_x_3 = sig_x_2 + sig_width + margin
-    pdf.set_y(current_y)
-    pdf.line(sig_x_3, sig_y, sig_x_3 + sig_width, sig_y)
-    pdf.set_xy(sig_x_3, sig_y + 1)
-    pdf.cell(sig_width, 5, "_________________________", align="C", ln=1)
-    pdf.set_x(sig_x_3)
-    pdf.cell(sig_width, 5, "Diretoria", align="C", ln=2)
+    pdf.set_y(signature_y)
+    pdf.set_font("Helvetica", "", small_font_size)
+    sig_width = page_width / 3 - 5
+    sig_x1 = margin
+    sig_x2 = margin + sig_width + 7.5
+    sig_x3 = margin + 2 * (sig_width + 7.5)
 
-    # Output PDF
-    try:
-        pdf.output(output_path)
-        print(f"PDF gerado com sucesso: {output_path}")
-    except Exception as e:
-        print(f"Erro ao salvar o PDF: {e}")
-        sys.exit(1)
+    pdf.set_x(sig_x1)
+    pdf.cell(sig_width, line_height, "________________________________________", align="C", ln=1)
+    pdf.set_x(sig_x1)
+    pdf.cell(sig_width, line_height, "SOLICITANTE", align="C", ln=0)
 
-# --- Main Execution --- #
+    pdf.set_xy(sig_x2, signature_y)
+    pdf.cell(sig_width, line_height, "________________________________________", align="C", ln=1)
+    pdf.set_x(sig_x2)
+    pdf.cell(sig_width, line_height, "APROVADOR", align="C", ln=0)
+
+    pdf.set_xy(sig_x3, signature_y)
+    pdf.cell(sig_width, line_height, "________________________________________", align="C", ln=1)
+    pdf.set_x(sig_x3)
+    pdf.cell(sig_width, line_height, "FINANCEIRO", align="C", ln=1)
+
+    # --- Salvar PDF ---
+    pdf.output(output_path)
+    print(f"PDF gerado com sucesso em: {output_path}")
+
+# --- Execução Principal ---
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Erro: Forneça o caminho para o arquivo JSON de dados como argumento.")
-        print("Uso: python generate_pdf.py dados_formulario.json [output_file.pdf]")
-        # Use sample data for testing if no argument provided
-        print("\nUsando dados de exemplo para teste...")
-        sample_data = {
-            "cnpjEmpresa": "11.222.333/0001-44",
-            "empresa": "EMPRESA TESTE LTDA",
-            "emailSolicitante": "teste@empresa.com",
-            "solicitante": "Funcionário Teste",
-            "departamento": "Financeiro",
-            "formaPagamento": ["PIX/TED"],
-            "dataPagamento": "2025-07-15",
-            "ordemCompra": "OC-12345",
-            "centroCusto": "CC-987",
-            "observacaoFinalidade": "Pagamento referente à nota fiscal 123. Compra de material de escritório.",
-            "itens": [
-                {"codigo": "P001", "descricao": "Papel Sulfite A4 Resma 500 folhas", "quantidade": "10", "valorUnitario": "25,50", "valorTotal": 255.0},
-                {"codigo": "C005", "descricao": "Caneta Esferográfica Azul BIC Cristal", "quantidade": "50", "valorUnitario": "1,20", "valorTotal": 60.0},
-                {"codigo": "CL02", "descricao": "Clips Galvanizado nº 4/0 Caixa com 100 unidades", "quantidade": "5", "valorUnitario": "3,80", "valorTotal": 19.0}
-            ],
-            "beneficiario": "FORNECEDOR XYZ PAPELARIA",
-            "cpfCnpjBeneficiario": "99.888.777/0001-66",
-            "banco": "BANCO EXEMPLO",
-            "agencia": "1234",
-            "conta": "56789-0",
-            "tipoConta": "Corrente",
-            "chavePix": "financeiro@fornecedorxyz.com",
-            "valorTotalGeral": 334.00
-        }
-        output_file = "/home/ubuntu/formulario_pagamento_exemplo.pdf"
-        form_data = sample_data
-    else:
-        json_file_path = sys.argv[1]
-        output_file = sys.argv[2] if len(sys.argv) > 2 else "/home/ubuntu/formulario_pagamento_gerado.pdf"
-        try:
-            with open(json_file_path, "r", encoding="utf-8") as f:
-                form_data = json.load(f)
-        except FileNotFoundError:
-            print(f"Erro: Arquivo JSON não encontrado em '{json_file_path}'")
-            sys.exit(1)
-        except json.JSONDecodeError as e:
-            print(f"Erro ao decodificar o arquivo JSON: {e}")
-            sys.exit(1)
-        except Exception as e:
-            print(f"Erro ao ler o arquivo JSON: {e}")
-            sys.exit(1)
+        print("Erro: Forneça o caminho do arquivo JSON como argumento.")
+        print("Uso: python generate_pdf.py <caminho_para_seu_arquivo.json>")
+        sys.exit(1)
 
-    create_pdf(form_data, output_file)
+    json_file_path = sys.argv[1]
+    output_pdf_path = json_file_path.replace(".json", ".pdf")
+
+    try:
+        with open(json_file_path, 'r', encoding='utf-8') as f:
+            form_data = json.load(f)
+    except FileNotFoundError:
+        print(f"Erro: Arquivo JSON não encontrado em '{json_file_path}'")
+        sys.exit(1)
+    except json.JSONDecodeError:
+        print(f"Erro: Falha ao decodificar o arquivo JSON em '{json_file_path}'. Verifique o formato.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Erro inesperado ao ler o arquivo JSON: {e}")
+        sys.exit(1)
+
+    try:
+        create_pdf(form_data, output_pdf_path)
+    except Exception as e:
+        print(f"Erro inesperado ao gerar o PDF: {e}")
+        sys.exit(1)
 
