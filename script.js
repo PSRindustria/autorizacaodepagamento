@@ -1,72 +1,93 @@
-// ========== SCRIPT PARA FORMULÁRIO DE ADIANTAMENTO À FORNECEDOR ==========
-
+// Variáveis globais
 let pdfDoc = null;
 let formValidated = false;
 
+// Função para inicializar o formulário
 document.addEventListener("DOMContentLoaded", function () {
-  // Data emissão auto
-  const hoje = new Date();
-  const dataFormatada = hoje.toISOString().split("T")[0];
-  const campoDataEmissao = document.getElementById("dataEmissao");
-  if (campoDataEmissao) campoDataEmissao.value = dataFormatada;
+  document.getElementById("addRowBtn").addEventListener("click", adicionarLinhaTabela);
+  document.getElementById("limparFormBtn").addEventListener("click", limparFormulario);
+  document.getElementById("generatePdfBtn").addEventListener("click", validarEGerarPDF);
 
-  atualizarDataLimite();
-
-  if (document.getElementById("gerarPdfBtn"))
-    document.getElementById("gerarPdfBtn").addEventListener("click", validarEGerarPDF);
-  if (document.getElementById("closePdfPreview"))
-    document.getElementById("closePdfPreview").addEventListener("click", fecharPreviewPDF);
-  if (document.getElementById("downloadPdfBtn"))
-    document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
-  if (document.getElementById("limparFormBtn"))
-    document.getElementById("limparFormBtn").addEventListener("click", limparFormulario);
-  if (document.getElementById("addRowBtn"))
-    document.getElementById("addRowBtn").addEventListener("click", adicionarLinhaTabela);
-
-  if (campoDataEmissao)
-    campoDataEmissao.addEventListener("change", atualizarDataLimite);
-
-  document.querySelectorAll("input[name=\"formaPagamento\"]").forEach((radio) => {
-    radio.addEventListener("change", atualizarCamposPagamento);
-  });
-
-  const camposValidaveis = document.querySelectorAll("input, textarea, select");
-  camposValidaveis.forEach((campo) => {
+  document.querySelectorAll("input, textarea, select").forEach((campo) => {
     campo.addEventListener("blur", function () {
       validarCampo(this);
-      atualizarProgressoFormulario();
     });
     campo.addEventListener("input", function () {
       this.classList.remove("input-error");
-      atualizarProgressoFormulario();
     });
   });
 
   inicializarMascaras();
 
-  const container = document.querySelector(".form-container");
-  if (container) container.classList.add("fade-in");
+  if (!document.getElementById("toastContainer")) {
+      const container = document.createElement("div");
+      container.id = "toastContainer";
+      document.body.appendChild(container);
+  }
+
+  if (!document.getElementById("pdfPreview")) {
+      const modal = document.createElement("div");
+      modal.id = "pdfPreview";
+      modal.className = "modal-overlay";
+      modal.innerHTML = `
+          <div class="modal-content" style="width: 80%; height: 80%; background: white; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative;">
+              <button id="closePdfPreview" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 16px; line-height: 25px; text-align: center;">×</button>
+              <div id="pdfContainer" style="width: 100%; height: calc(100% - 40px); margin-top: 30px;"></div>
+              <button id="downloadPdfBtn" style="position: absolute; bottom: 10px; right: 10px; padding: 8px 15px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer;">Baixar PDF</button>
+          </div>
+      `;
+      document.body.appendChild(modal);
+
+      document.getElementById("closePdfPreview").addEventListener("click", fecharPreviewPDF);
+      document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
+  }
 });
 
-function atualizarDataLimite() {
-  try {
-    const dataEmissaoStr = document.getElementById("dataEmissao")?.value;
-    if (!dataEmissaoStr) return;
-    const dataEmissao = new Date(dataEmissaoStr + "T00:00:00");
-    if (isNaN(dataEmissao.getTime())) return;
-
-    const dataLimite = new Date(dataEmissao);
-    dataLimite.setDate(dataLimite.getDate() + 30);
-    const dataLimiteFormatada = dataLimite.toISOString().split("T")[0];
-    if (document.getElementById("dataLimitePrestacao"))
-      document.getElementById("dataLimitePrestacao").value = dataLimiteFormatada;
-  } catch (e) {
-    if (document.getElementById("dataLimitePrestacao"))
-      document.getElementById("dataLimitePrestacao").value = "";
+// Máscara para valores e CNPJ/CPF
+function inicializarMascaras() {
+  // CNPJ Empresa
+  let cnpjInput = document.getElementById("cnpjEmpresa");
+  if (cnpjInput) {
+    cnpjInput.addEventListener("input", function (e) {
+      let valor = e.target.value.replace(/\D/g, "").slice(0, 14);
+      if (valor.length > 12)
+        valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+      else if (valor.length > 8)
+        valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, "$1.$2.$3/$4");
+      else if (valor.length > 5)
+        valor = valor.replace(/^(\d{2})(\d{3})(\d{0,3})/, "$1.$2.$3");
+      else if (valor.length > 2)
+        valor = valor.replace(/^(\d{2})(\d{0,3})/, "$1.$2");
+      e.target.value = valor;
+    });
   }
+  // CPF/CNPJ Beneficiário
+  let cpfCnpjInput = document.getElementById("cpfCnpjBeneficiario");
+  if (cpfCnpjInput) {
+    cpfCnpjInput.addEventListener("input", function (e) {
+      let valor = e.target.value.replace(/\D/g, "");
+      if (valor.length <= 11) {
+        valor = valor.substring(0, 11);
+        if (valor.length > 9) valor = valor.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, "$1.$2.$3-$4");
+        else if (valor.length > 6) valor = valor.replace(/^(\d{3})(\d{3})(\d{0,3})$/, "$1.$2.$3");
+        else if (valor.length > 3) valor = valor.replace(/^(\d{3})(\d{0,3})$/, "$1.$2");
+      } else {
+        valor = valor.substring(0, 14);
+        if (valor.length > 12)
+          valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+        else if (valor.length > 8)
+          valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, "$1.$2.$3/$4");
+        else if (valor.length > 5)
+          valor = valor.replace(/^(\d{2})(\d{3})(\d{0,3})/, "$1.$2.$3");
+        else if (valor.length > 2)
+          valor = valor.replace(/^(\d{2})(\d{0,3})/, "$1.$2");
+      }
+      e.target.value = valor;
+    });
+  }
+  // Valores
+  aplicarMascaraValor(document.getElementById("totalGeral"));
 }
-
-function atualizarCamposPagamento() {}
 
 function aplicarMascaraValor(input) {
   if (!input) return;
@@ -79,233 +100,35 @@ function aplicarMascaraValor(input) {
   });
 }
 
-function inicializarMascaras() {
-  const cnpjInput = document.getElementById("cnpjFornecedor");
-  if (cnpjInput) {
-    cnpjInput.addEventListener("input", function (e) {
-      let valor = e.target.value.replace(/\D/g, "");
-      valor = valor.substring(0, 14);
-      if (valor.length > 12) {
-        valor = valor.replace(
-          /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-          "$1.$2.$3/$4-$5"
-        );
-      } else if (valor.length > 8) {
-        valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, "$1.$2.$3/$4");
-      } else if (valor.length > 5) {
-        valor = valor.replace(/^(\d{2})(\d{3})(\d{0,3})/, "$1.$2.$3");
-      } else if (valor.length > 2) {
-        valor = valor.replace(/^(\d{2})(\d{0,3})/, "$1.$2");
-      }
-      e.target.value = valor;
-    });
-  }
-
-  const cpfCnpjInput = document.getElementById("cpfCnpj");
-  if (cpfCnpjInput) {
-    cpfCnpjInput.addEventListener("input", function (e) {
-      let valor = e.target.value.replace(/\D/g, "");
-      if (valor.length <= 11) {
-        valor = valor.substring(0, 11);
-        if (valor.length > 9) {
-          valor = valor.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})$/, "$1.$2.$3-$4");
-        } else if (valor.length > 6) {
-          valor = valor.replace(/^(\d{3})(\d{3})(\d{0,3})$/, "$1.$2.$3");
-        } else if (valor.length > 3) {
-          valor = valor.replace(/^(\d{3})(\d{0,3})$/, "$1.$2");
-        }
-      } else {
-        valor = valor.substring(0, 14);
-        if (valor.length > 12) {
-          valor = valor.replace(
-            /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-            "$1.$2.$3/$4-$5"
-          );
-        } else if (valor.length > 8) {
-          valor = valor.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, "$1.$2.$3/$4");
-        } else if (valor.length > 5) {
-          valor = valor.replace(/^(\d{2})(\d{3})(\d{0,3})/, "$1.$2.$3");
-        } else if (valor.length > 2) {
-          valor = valor.replace(/^(\d{2})(\d{0,3})/, "$1.$2");
-        }
-      }
-      e.target.value = valor;
-    });
-  }
-
-  // Campo principal de valor
-  const valorInput = document.getElementById("valor");
-  if (valorInput) aplicarMascaraValor(valorInput);
-
-  document.querySelectorAll('.valor-adiantamento').forEach(aplicarMascaraValor);
-}
-
-function validarCampo(campo) {
-  if (!campo) return false;
-  const id = campo.id;
-  const valor = campo.value.trim();
-  const mensagemValidacao = document.getElementById(`${id}-validation`);
-  let valido = true;
-
-  campo.classList.remove("input-error", "input-success");
-  if (mensagemValidacao) mensagemValidacao.textContent = "";
-
-  const obrigatorios = [
-    "codigoFornecedor",
-    "fornecedor",
-    "cnpjFornecedor",
-    "dataEmissao",
-    "valor",
-    "solicitante",
-    "departamento",
-  ];
-
-  if (obrigatorios.includes(id) && !valor) {
-    if (mensagemValidacao) mensagemValidacao.textContent = "Campo obrigatório";
-    valido = false;
-  }
-
-  if (valido && id === "cnpjFornecedor" && !validarCNPJ(valor)) {
-    if (mensagemValidacao) mensagemValidacao.textContent = "CNPJ inválido";
-    valido = false;
-  }
-
-  if (valido && id === "valor") {
-    const valorNumerico = parseFloat(valor.replace(/\./g, "").replace(",", "."));
-    if (isNaN(valorNumerico) || valorNumerico <= 0) {
-        if (mensagemValidacao) mensagemValidacao.textContent = "Valor inválido";
-        valido = false;
-    }
-  }
-
-  if (!valido) {
-    campo.classList.add("input-error");
-  } else if (valor) {
-    campo.classList.add("input-success");
-  }
-
-  return valido;
-}
-
-function validarCNPJ(cnpj) {
-  const numeros = cnpj.replace(/\D/g, "");
-  return numeros.length === 14;
-}
-
-function validarFormulario() {
-  const camposValidaveis = document.querySelectorAll(
-    "#adiantamentoForm input:not([type=\"radio\"]), #adiantamentoForm textarea, #adiantamentoForm select"
-  );
-  let formValido = true;
-
-  camposValidaveis.forEach((campo) => {
-    const obrigatorios = [
-      "codigoFornecedor",
-      "fornecedor",
-      "cnpjFornecedor",
-      "dataEmissao",
-      "valor",
-      "solicitante",
-      "departamento",
-    ];
-    if (obrigatorios.includes(campo.id) || campo.value.trim() !== "") {
-         if (!validarCampo(campo)) {
-            formValido = false;
-         }
-    }
-  });
-
-  const formaPagamento = document.querySelector(
-    "input[name=\"formaPagamento\"]:checked"
-  );
-  const validacaoFormaPagamento = document.getElementById(
-    "formaPagamento-validation"
-  );
-  if (!formaPagamento) {
-    if (validacaoFormaPagamento) validacaoFormaPagamento.textContent = "Selecione uma forma de pagamento";
-    formValido = false;
-  } else {
-    if (validacaoFormaPagamento) validacaoFormaPagamento.textContent = "";
-  }
-
-  return formValido;
-}
-
-function atualizarProgressoFormulario() {
-  const camposObrigatorios = [
-    "codigoFornecedor",
-    "fornecedor",
-    "cnpjFornecedor",
-    "dataEmissao",
-    "valor",
-    "solicitante",
-    "departamento",
-  ];
-  let preenchidos = 0;
-  const totalObrigatorios = camposObrigatorios.length + 1;
-
-  camposObrigatorios.forEach(id => {
-      const campo = document.getElementById(id);
-      if(campo && campo.value.trim() !== "") {
-          preenchidos++;
-      }
-  });
-
-  if (document.querySelector("input[name=\"formaPagamento\"]:checked")) {
-      preenchidos++;
-  }
-
-  const progresso = (preenchidos / totalObrigatorios) * 100;
-  if (document.getElementById("formProgress"))
-    document.getElementById("formProgress").style.width = `${Math.min(progresso,100)}%`;
-}
-
 function adicionarLinhaTabela() {
-  const tbody = document.querySelector("#adiantamentosTable tbody");
-  if (!tbody) return;
+  const tbody = document.querySelector("#itensTable tbody");
   if (tbody.rows.length >= 10) {
-      mostrarToast("Máximo de 10 linhas de adiantamento atingido.", "warning");
+      mostrarToast("Máximo de 10 itens atingido.", "warning");
       return;
   }
   const novaLinha = document.createElement("tr");
-
   novaLinha.innerHTML = `
-        <td><input type="text" name="adiantamentoOC[]" class="input-animated"></td>
-        <td><input type="date" name="adiantamentoData[]" class="input-animated"></td>
-        <td>
-            <div class="input-prefix">
-                <span>R$</span>
-                <input type="text" name="adiantamentoValor[]" class="input-animated valor-adiantamento" placeholder="0,00">
-            </div>
-        </td>
-    `;
-
+      <td><input type="text" name="itemCodigo[]" class="input-animated"></td>
+      <td><input type="text" name="itemDescricao[]" class="input-animated"></td>
+      <td><input type="number" name="itemQuantidade[]" class="input-animated" min="1"></td>
+      <td><input type="text" name="itemValorUnitario[]" class="input-animated valor-item"></td>
+      <td><input type="text" name="itemValorTotal[]" class="input-animated valor-item"></td>
+      <td><button type="button" class="secondary-button removerItemBtn"><i class="fas fa-trash"></i></button></td>
+  `;
   tbody.appendChild(novaLinha);
-  novaLinha.classList.add("fade-in");
-  mostrarToast("Nova linha adicionada", "success");
-  novaLinha.querySelectorAll('.valor-adiantamento').forEach(aplicarMascaraValor);
+  novaLinha.querySelectorAll('.valor-item').forEach(aplicarMascaraValor);
+  novaLinha.querySelector(".removerItemBtn").addEventListener("click", function () {
+      novaLinha.remove();
+  });
 }
 
 function limparFormulario() {
-  if (document.getElementById("adiantamentoForm"))
-    document.getElementById("adiantamentoForm").reset();
-
-  const hoje = new Date();
-  const dataFormatada = hoje.toISOString().split("T")[0];
-  if (document.getElementById("dataEmissao"))
-    document.getElementById("dataEmissao").value = dataFormatada;
-  atualizarDataLimite();
-
-  document.querySelectorAll(".validation-message").forEach((msg) => {
-    msg.textContent = "";
-  });
-
+  document.getElementById("autorizacaoForm").reset();
+  document.querySelectorAll(".validation-message").forEach((msg) => { msg.textContent = ""; });
   document.querySelectorAll(".input-error, .input-success").forEach((campo) => {
     campo.classList.remove("input-error", "input-success");
   });
-
-  if (document.getElementById("formProgress"))
-    document.getElementById("formProgress").style.width = "0%";
+  document.querySelector("#itensTable tbody").innerHTML = "";
   mostrarToast("Formulário limpo com sucesso", "success");
 }
 
@@ -314,10 +137,6 @@ function mostrarToast(mensagem, tipo = "success") {
   if (!toastContainer) {
     toastContainer = document.createElement("div");
     toastContainer.id = "toastContainer";
-    toastContainer.style.position = "fixed";
-    toastContainer.style.top = "20px";
-    toastContainer.style.right = "20px";
-    toastContainer.style.zIndex = "1000";
     document.body.appendChild(toastContainer);
   }
   const toast = document.createElement("div");
@@ -328,16 +147,41 @@ function mostrarToast(mensagem, tipo = "success") {
   setTimeout(() => { toast.classList.remove("show"); toast.remove(); }, 3000);
 }
 
+function validarCampo(campo) {
+  const id = campo.id;
+  const valor = campo.value.trim();
+  const obrigatorios = [
+    "cnpjEmpresa", "empresa", "emailSolicitante", "solicitante", "departamento",
+    "dataPagamento", "beneficiario", "cpfCnpjBeneficiario", "banco", "agencia", "conta", "tipoConta", "totalGeral"
+  ];
+  if (obrigatorios.includes(id) && !valor) {
+    campo.classList.add("input-error");
+    return false;
+  } else {
+    campo.classList.remove("input-error");
+    return true;
+  }
+}
+
+function validarFormulario() {
+  let ok = true;
+  document.querySelectorAll("input, textarea, select").forEach((campo) => {
+    if (!validarCampo(campo)) ok = false;
+  });
+  // Pelo menos uma forma de pagamento
+  const checked = Array.from(document.querySelectorAll("input[name='formaPagamento']:checked"));
+  if (checked.length === 0) {
+    mostrarToast("Selecione pelo menos uma forma de pagamento", "error");
+    ok = false;
+  }
+  return ok;
+}
+
 function validarEGerarPDF() {
   if (validarFormulario()) {
     gerarPDF();
-    formValidated = true;
   } else {
-    mostrarToast("Por favor, corrija os erros no formulário", "error");
-    const primeiroErro = document.querySelector(".input-error");
-    if (primeiroErro) {
-      primeiroErro.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+    mostrarToast("Por favor, corrija os campos obrigatórios.", "error");
   }
 }
 
@@ -382,134 +226,191 @@ function loadImageAsBase64(url) {
   });
 }
 
-// =============== GERADOR PDF AJUSTADO =================
+// =============== GERADOR PDF COMPLETO ===============
 async function gerarPDF() {
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  mostrarToast("Gerando PDF...", "info");
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-    // --- Dados (pegando só se o campo existe!)
-    function campo(id) {
-      const el = document.getElementById(id);
-      return el ? el.value : "";
-    }
-    const dados = {
-      codigoFornecedor: campo("codigoFornecedor"),
-      finalidade: campo("finalidade"),
-      fornecedor: campo("fornecedor"),
-      cnpjFornecedor: campo("cnpjFornecedor"),
-      dataEmissao: campo("dataEmissao"),
-      dataPagamento: campo("dataPagamento"),
-      ordemCompra: campo("ordemCompra"),
-      valor: campo("valor"),
-      formaPagamento: (document.querySelector("input[name=\"formaPagamento\"]:checked")?.value || ""),
-      beneficiario: campo("beneficiario"),
-      cpfCnpj: campo("cpfCnpj"),
-      banco: campo("banco"),
-      solicitante: campo("solicitante"),
-      agencia: campo("agencia"),
-      conta: campo("conta"),
-      departamento: campo("departamento"),
-      tipoConta: campo("tipoConta"),
-      chavePix: campo("chavePix"),
-      dataLimitePrestacao: campo("dataLimitePrestacao"),
-      adiantamentos: [],
+  // --- Coleta dos Dados ---
+  const dados = {
+    cnpjEmpresa: document.getElementById("cnpjEmpresa").value,
+    empresa: document.getElementById("empresa").value,
+    emailSolicitante: document.getElementById("emailSolicitante").value,
+    solicitante: document.getElementById("solicitante").value,
+    departamento: document.getElementById("departamento").value,
+    formasPagamento: Array.from(document.querySelectorAll("input[name='formaPagamento']:checked")).map(c => c.value),
+    dataPagamento: document.getElementById("dataPagamento").value,
+    ordemCompra: document.getElementById("ordemCompra").value,
+    centroCusto: document.getElementById("centroCusto").value,
+    observacaoFinalidade: document.getElementById("observacaoFinalidade").value,
+    beneficiario: document.getElementById("beneficiario").value,
+    cpfCnpjBeneficiario: document.getElementById("cpfCnpjBeneficiario").value,
+    banco: document.getElementById("banco").value,
+    agencia: document.getElementById("agencia").value,
+    conta: document.getElementById("conta").value,
+    tipoConta: document.getElementById("tipoConta").value,
+    chavePix: document.getElementById("chavePix").value,
+    totalGeral: document.getElementById("totalGeral").value,
+    itens: [],
+  };
+
+  // Coletando itens
+  const linhas = document.querySelectorAll("#itensTable tbody tr");
+  linhas.forEach(linha => {
+    const item = {
+      codigo: linha.querySelector("input[name='itemCodigo[]']").value,
+      descricao: linha.querySelector("input[name='itemDescricao[]']").value,
+      quantidade: linha.querySelector("input[name='itemQuantidade[]']").value,
+      valorUnitario: linha.querySelector("input[name='itemValorUnitario[]']").value,
+      valorTotal: linha.querySelector("input[name='itemValorTotal[]']").value,
     };
+    if (item.codigo || item.descricao || item.quantidade || item.valorUnitario || item.valorTotal) {
+      dados.itens.push(item);
+    }
+  });
 
-    const linhasTabela = document.querySelectorAll("#adiantamentosTable tbody tr");
-    linhasTabela.forEach((linha) => {
-      const ocInput = linha.querySelector("input[name=\"adiantamentoOC[]\"]");
-      const dataInput = linha.querySelector("input[name=\"adiantamentoData[]\"]");
-      const valorInput = linha.querySelector("input[name=\"adiantamentoValor[]\"]");
-      const oc = ocInput ? ocInput.value : "";
-      const data = dataInput ? dataInput.value : "";
-      const valorRaw = valorInput ? valorInput.value : "";
-      if (oc || data || valorRaw) {
-        const valorFormatado = formatarMoeda(valorRaw);
-        dados.adiantamentos.push({
-          ordemCompra: oc,
-          dataLimite: data,
-          valor: valorFormatado
-        });
-      }
-    });
+  // --- Cabeçalho visual igual ao PDF ---
+  const margin = 12;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let currentY = margin;
 
-    // CABEÇALHO
-    const margin = 10;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    let currentY = margin;
+  // Logo centralizada
+  const logoBase64 = await loadImageAsBase64("https://i.postimg.cc/v8nRpXB7/logo.png");
+  const logoWidth = 50;
+  const logoHeight = 13;
+  const logoX = (pageWidth - logoWidth) / 2;
+  doc.addImage(logoBase64, 'PNG', logoX, currentY, logoWidth, logoHeight);
+  currentY += logoHeight + 2;
 
-    // Logo
-    let logoBase64 = "";
-    try {
-      logoBase64 = await loadImageAsBase64("https://i.postimg.cc/v8nRpXB7/logo.png");
-      doc.addImage(logoBase64, 'PNG', pageWidth - margin - 60, currentY, 60, 16);
-    } catch (e) {}
+  // Título e caixa de versão
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("FORMULÁRIO DE AUTORIZAÇÃO DE PAGAMENTO", pageWidth / 2, currentY + 6, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.text("FOR_FIN_02_01", pageWidth - margin, currentY + 2, { align: "right" });
+  doc.text("VERSÃO: 01", pageWidth - margin, currentY + 6, { align: "right" });
 
-    // Caixa de versão
-    const boxWidth = 38, boxHeight = 10, logoWidth = 60;
-    const boxX = pageWidth - margin - logoWidth - boxWidth - 3;
-    const boxY = currentY;
-    doc.setLineWidth(0.3);
-    doc.setDrawColor(0);
-    doc.rect(boxX, boxY, boxWidth, boxHeight);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.text("FOR_FIN_02_02", boxX + boxWidth / 2, boxY + 4, { align: "center" });
-    doc.text("VERSÃO: 01", boxX + boxWidth / 2, boxY + 8, { align: "center" });
+  currentY += 14;
+  doc.setLineWidth(0.5);
+  doc.line(margin, currentY, pageWidth - margin, currentY);
+  currentY += 4;
 
-    // Título centralizado
-    const tituloY = currentY + 16 + 10;
-    doc.setFontSize(13);
-    doc.setFont("helvetica", "bold");
-    doc.text("FORMULÁRIO DE ADIANTAMENTO À FORNECEDOR", pageWidth / 2, tituloY, { align: "center" });
+  // Dados Gerais da Empresa (esquerda)
+  doc.setFont("helvetica", "bold"); doc.text("CNPJ:", margin, currentY + 4);
+  doc.setFont("helvetica", "normal"); doc.text(dados.cnpjEmpresa, margin + 22, currentY + 4);
 
-    // Linha horizontal grossa
-    let afterTitleY = tituloY + 3;
-    doc.setLineWidth(0.8);
-    doc.line(margin, afterTitleY, pageWidth - margin, afterTitleY);
-    currentY = afterTitleY + 5;
+  doc.setFont("helvetica", "bold"); doc.text("EMPRESA:", margin, currentY + 9);
+  doc.setFont("helvetica", "normal"); doc.text(dados.empresa, margin + 22, currentY + 9);
 
-    // ...[restante dos campos, tabela, adiantamentos, igual você já tinha]...
+  doc.setFont("helvetica", "bold"); doc.text("E-MAIL:", margin, currentY + 14);
+  doc.setFont("helvetica", "normal"); doc.text(dados.emailSolicitante, margin + 22, currentY + 14);
 
-    // --- Assinaturas lado a lado ---
-    currentY += 18;
-    const signatureLineLength = 55;
-    const col1X = margin + (pageWidth - 2 * margin) * 0.13;
-    const col2X = pageWidth - margin - (pageWidth - 2 * margin) * 0.13 - signatureLineLength;
+  doc.setFont("helvetica", "bold"); doc.text("SOLICITANTE:", margin, currentY + 19);
+  doc.setFont("helvetica", "normal"); doc.text(dados.solicitante, margin + 22, currentY + 19);
 
-    doc.setLineWidth(0.3);
-    doc.line(col1X, currentY, col1X + signatureLineLength, currentY);
-    doc.text("Solicitante", col1X + signatureLineLength / 2, currentY + 5, { align: "center" });
-    doc.line(col2X, currentY, col2X + signatureLineLength, currentY);
-    doc.text("Controladoria", col2X + signatureLineLength / 2, currentY + 5, { align: "center" });
+  doc.setFont("helvetica", "bold"); doc.text("DEPARTAMENTO:", margin, currentY + 24);
+  doc.setFont("helvetica", "normal"); doc.text(dados.departamento, margin + 22, currentY + 24);
 
-    // --- Finalização ---
-    pdfDoc = doc;
+  let direitaY = currentY;
+  let direitaX = pageWidth / 2 + 2;
 
-    try {
+  doc.setFont("helvetica", "bold"); doc.text("FORMA DE PAGAMENTO:", direitaX, direitaY + 4);
+  doc.setFont("helvetica", "normal");
+  doc.text((dados.formasPagamento.join(" | ") || ""), direitaX + 40, direitaY + 4);
+
+  doc.setFont("helvetica", "bold"); doc.text("DATA PARA PAGAMENTO:", direitaX, direitaY + 9);
+  doc.setFont("helvetica", "normal"); doc.text(formatarData(dados.dataPagamento), direitaX + 40, direitaY + 9);
+
+  doc.setFont("helvetica", "bold"); doc.text("ORDEM DE COMPRA:", direitaX, direitaY + 14);
+  doc.setFont("helvetica", "normal"); doc.text(dados.ordemCompra, direitaX + 40, direitaY + 14);
+
+  doc.setFont("helvetica", "bold"); doc.text("CENTRO DE CUSTO:", direitaX, direitaY + 19);
+  doc.setFont("helvetica", "normal"); doc.text(dados.centroCusto, direitaX + 40, direitaY + 19);
+
+  currentY += 28;
+  // Observação/Finalidade
+  doc.setFont("helvetica", "bold");
+  doc.text("OBSERVAÇÃO / FINALIDADE:", margin, currentY + 5);
+  doc.setFont("helvetica", "normal");
+  let finalidadeLines = doc.splitTextToSize(dados.observacaoFinalidade, pageWidth - margin * 2);
+  doc.text(finalidadeLines, margin, currentY + 10);
+  currentY += Math.max(14, finalidadeLines.length * 4 + 6);
+
+  // --- Tabela Itens/Serviços ---
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("ITENS / SERVIÇOS:", margin, currentY + 3);
+
+  currentY += 6;
+
+  doc.autoTable({
+    startY: currentY,
+    head: [['CÓDIGO', 'DESCRIÇÃO', 'QUANT.', 'V.UNIT.', 'V.TOTAL']],
+    body: dados.itens.map(i => [
+      i.codigo, i.descricao, i.quantidade, i.valorUnitario, i.valorTotal
+    ]),
+    margin: { left: margin, right: margin },
+    headStyles: { fillColor: [200, 200, 200] },
+    theme: 'grid',
+    styles: { font: "helvetica", fontSize: 8, cellPadding: 1.5 },
+  });
+  currentY = doc.lastAutoTable.finalY + 4;
+
+  // Dados para pagamento
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("DADOS PARA PAGAMENTO:", margin, currentY + 5);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.text("BENEFICIÁRIO:", margin, currentY + 10); doc.text(dados.beneficiario, margin + 25, currentY + 10);
+  doc.text("CPF / CNPJ:", margin, currentY + 15); doc.text(dados.cpfCnpjBeneficiario, margin + 25, currentY + 15);
+  doc.text("BANCO:", margin, currentY + 20); doc.text(dados.banco, margin + 25, currentY + 20);
+  doc.text("AGÊNCIA:", margin, currentY + 25); doc.text(dados.agencia, margin + 25, currentY + 25);
+  doc.text("CONTA:", margin, currentY + 30); doc.text(dados.conta, margin + 25, currentY + 30);
+  doc.text("TIPO DE CONTA:", margin, currentY + 35); doc.text(dados.tipoConta, margin + 25, currentY + 35);
+  doc.text("CHAVE PIX:", margin, currentY + 40); doc.text(dados.chavePix, margin + 25, currentY + 40);
+
+  // Total geral
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("TOTAL GERAL:", pageWidth - margin - 60, currentY + 30);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  doc.text("R$ " + (dados.totalGeral || "0,00"), pageWidth - margin - 20, currentY + 30);
+
+  // --- Assinaturas
+  let assinaturaY = currentY + 50;
+  if (assinaturaY > 255) assinaturaY = 255;
+
+  doc.setFont("helvetica", "normal");
+  doc.setLineWidth(0.3);
+  doc.line(margin + 10, assinaturaY, margin + 70, assinaturaY);
+  doc.text("Solicitante", margin + 40, assinaturaY + 5, { align: "center" });
+
+  doc.line(pageWidth - margin - 70, assinaturaY, pageWidth - margin - 10, assinaturaY);
+  doc.text("Controladoria", pageWidth - margin - 40, assinaturaY + 5, { align: "center" });
+
+  // --- Finalização
+  pdfDoc = doc;
+
+  try {
       const pdfData = doc.output("datauristring");
       const pdfContainer = document.getElementById("pdfContainer");
       if (pdfContainer) {
-        pdfContainer.innerHTML = `<embed width="100%" height="100%" src="${pdfData}" type="application/pdf">`;
-        document.getElementById("pdfPreview").classList.add("active");
-        mostrarToast("PDF gerado com sucesso!", "success");
-      } else {
-        doc.save("Adiantamento.pdf");
-        mostrarToast("PDF baixado com sucesso!", "success");
+          pdfContainer.innerHTML = `<embed width="100%" height="100%" src="${pdfData}" type="application/pdf">`;
+          document.getElementById("pdfPreview").classList.add("active");
+          mostrarToast("PDF gerado com sucesso!", "success");
       }
-    } catch (e) {
-      mostrarToast("Erro ao gerar PDF: " + e.message, "error");
-    }
   } catch (e) {
-    mostrarToast("Erro ao gerar PDF: " + e.message, "error");
+      mostrarToast("Erro ao gerar preview do PDF.", "error");
   }
 }
 
 // Fechar preview
 function fecharPreviewPDF() {
-  const modal = document.getElementById("pdfPreview");
-  if (modal) modal.classList.remove("active");
+  document.getElementById("pdfPreview").classList.remove("active");
   const pdfContainer = document.getElementById("pdfContainer");
   if(pdfContainer) pdfContainer.innerHTML = "";
 }
@@ -517,10 +418,10 @@ function fecharPreviewPDF() {
 // Download PDF
 function downloadPDF() {
   if (pdfDoc) {
-    const fornecedor = document.getElementById("fornecedor")?.value || "fornecedor";
-    const dataEmissao = document.getElementById("dataEmissao")?.value || new Date().toISOString().split("T")[0];
-    const fornecedorLimpo = fornecedor.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const nomeArquivo = `Adiantamento_${fornecedorLimpo}_${dataEmissao}.pdf`;
+    const empresa = document.getElementById("empresa").value || "empresa";
+    const data = new Date().toISOString().split("T")[0];
+    const empresaLimpo = empresa.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const nomeArquivo = `AutorizacaoPagamento_${empresaLimpo}_${data}.pdf`;
     try {
         pdfDoc.save(nomeArquivo);
         mostrarToast("PDF baixado com sucesso!", "success");
@@ -530,32 +431,4 @@ function downloadPDF() {
   } else {
       mostrarToast("Nenhum PDF gerado para baixar.", "warning");
   }
-}
-
-// Toast e modal
-if (!document.getElementById("toastContainer")) {
-    const container = document.createElement("div");
-    container.id = "toastContainer";
-    container.style.position = "fixed";
-    container.style.top = "20px";
-    container.style.right = "20px";
-    container.style.zIndex = "1000";
-    document.body.appendChild(container);
-}
-
-if (!document.getElementById("pdfPreview")) {
-    const modal = document.createElement("div");
-    modal.id = "pdfPreview";
-    modal.className = "modal-overlay";
-    modal.innerHTML = `
-        <div class="modal-content" style="width: 80%; height: 80%; background: white; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative;">
-            <button id="closePdfPreview" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 16px; line-height: 25px; text-align: center;">×</button>
-            <div id="pdfContainer" style="width: 100%; height: calc(100% - 40px); margin-top: 30px;"></div>
-            <button id="downloadPdfBtn" style="position: absolute; bottom: 10px; right: 10px; padding: 8px 15px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer;">Baixar PDF</button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    document.getElementById("closePdfPreview").addEventListener("click", fecharPreviewPDF);
-    document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
 }
