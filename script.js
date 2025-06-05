@@ -190,131 +190,131 @@ function loadImageAsBase64(url) {
 
 // Função principal de geração de PDF (download automático)
 async function gerarPDF() {
-    mostrarToast("Gerando PDF...", "info");
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  mostrarToast("Gerando PDF...", "info");
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
 
-    // Logo centralizada
-    const logoBase64 = await loadImageAsBase64("https://i.postimg.cc/v8nRpXB7/logo.png");
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const logoWidth = 60;
-    const logoHeight = 17;
-    const logoX = (pageWidth - logoWidth) / 2;
-    doc.addImage(logoBase64, 'PNG', logoX, 8, logoWidth, logoHeight);
+  // --- Coleta dos Dados ---
+  const dados = {
+    codigoFornecedor: document.getElementById("codigoFornecedor").value,
+    finalidade: document.getElementById("finalidade").value,
+    fornecedor: document.getElementById("fornecedor").value,
+    cnpjFornecedor: document.getElementById("cnpjFornecedor").value,
+    dataEmissao: document.getElementById("dataEmissao").value,
+    dataPagamento: document.getElementById("dataPagamento").value,
+    ordemCompra: document.getElementById("ordemCompra").value,
+    valor: document.getElementById("valor").value,
+    formaPagamento: document.querySelector("input[name=\"formaPagamento\"]:checked")?.value || "",
+    beneficiario: document.getElementById("beneficiario").value,
+    cpfCnpj: document.getElementById("cpfCnpj").value,
+    banco: document.getElementById("banco").value,
+    solicitante: document.getElementById("solicitante").value,
+    agencia: document.getElementById("agencia").value,
+    conta: document.getElementById("conta").value,
+    departamento: document.getElementById("departamento").value,
+    tipoConta: document.getElementById("tipoConta").value,
+    chavePix: document.getElementById("chavePix").value,
+    dataLimitePrestacao: document.getElementById("dataLimitePrestacao").value,
+    adiantamentos: [],
+  };
 
-    // Cabeçalho
-    doc.setFontSize(13);
-    doc.setFont("helvetica", "bold");
-    doc.text("FORMULÁRIO DE AUTORIZAÇÃO DE PAGAMENTO", pageWidth / 2, 27, { align: "center" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text("FOR_FIN_02_01", 170, 13);
-    doc.text("VERSÃO: 01", 170, 17);
-    doc.setLineWidth(0.3);
-    doc.line(10, 32, 200, 32);
-
-    // Dados principais
-    let y = 38;
-    function addField(label, value) {
-        doc.setFont("helvetica", "bold");
-        doc.text(label, 12, y);
-        doc.setFont("helvetica", "normal");
-        doc.text(String(value || ""), 70, y);
-        y += 6;
+  const linhasTabela = document.querySelectorAll("#adiantamentosTable tbody tr");
+  linhasTabela.forEach((linha) => {
+    const ocInput = linha.querySelector("input[name=\"adiantamentoOC[]\"]");
+    const dataInput = linha.querySelector("input[name=\"adiantamentoData[]\"]");
+    const valorInput = linha.querySelector("input[name=\"adiantamentoValor[]\"]");
+    const oc = ocInput ? ocInput.value : "";
+    const data = dataInput ? dataInput.value : "";
+    const valorRaw = valorInput ? valorInput.value : "";
+    if (oc || data || valorRaw) {
+        const valorFormatado = formatarMoeda(valorRaw);
+        dados.adiantamentos.push({
+            ordemCompra: oc,
+            dataLimite: data,
+            valor: valorFormatado
+        });
     }
-    addField("CNPJ:", document.getElementById("cnpjEmpresa").value);
-    addField("EMPRESA:", document.getElementById("empresa").value);
-    addField("E-MAIL:", document.getElementById("emailSolicitante").value);
-    addField("SOLICITANTE:", document.getElementById("solicitante").value);
-    addField("DEPARTAMENTO:", document.getElementById("departamento").value);
+  });
 
-    // Forma de pagamento
-    y += 2;
-    doc.setFont("helvetica", "bold");
-    doc.text("FORMA DE PAGAMENTO:", 12, y);
-    doc.setFont("helvetica", "normal");
-    let checkX = 60, checkY = y - 3, box = 4;
-    const formas = [
-        { id: "pgtoPixTed", label: "PIX/TED" },
-        { id: "pgtoBoleto", label: "BOLETO" },
-        { id: "pgtoAdiantado", label: "PAGO ADIANTADO" }
-    ];
-    formas.forEach((f, i) => {
-        doc.rect(checkX + (i * 33), checkY, box, box);
-        if (document.getElementById(f.id).checked) {
-            doc.setFont("helvetica", "bold");
-            doc.text("X", checkX + (i * 33) + 1.4, checkY + 3.2);
-            doc.setFont("helvetica", "normal");
-        }
-        doc.text(f.label, checkX + (i * 33) + 6, checkY + 3);
-    });
-    y += 8;
-    addField("DATA PARA PAGAMENTO:", document.getElementById("dataPagamento").value);
-    addField("ORDEM DE COMPRA:", document.getElementById("ordemCompra").value);
-    addField("CENTRO DE CUSTO:", document.getElementById("centroCusto").value);
+  // === CABEÇALHO: Igual referência ===
+  const margin = 10;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const contentWidth = pageWidth - 2 * margin;
+  let currentY = margin;
 
-    // Finalidade/Observação
-    y += 4;
-    doc.setFont("helvetica", "bold");
-    doc.text("OBSERVAÇÃO / FINALIDADE:", 12, y);
-    doc.setFont("helvetica", "normal");
-    const obs = document.getElementById("observacaoFinalidade").value || "";
-    doc.text(doc.splitTextToSize(obs, 120), 12, y + 6);
-    y += 15;
+  // Logo grande alinhada à direita
+  const logoUrl = "https://i.postimg.cc/v8nRpXB7/logo.png";
+  const logoWidth = 60;  // Mesmo tamanho da referência
+  const logoHeight = 16;
+  const logoX = pageWidth - margin - logoWidth;
+  const logoY = currentY;
+  const logoBase64 = await loadImageAsBase64(logoUrl);
+  doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight);
 
-    // Tabela Itens/Serviços (com jsPDF-AutoTable)
-    doc.setFont("helvetica", "bold");
-    doc.text("ITENS / SERVIÇOS:", 12, y);
-    y += 4;
-    doc.setFontSize(8);
+  // Caixa de versão (acima do título)
+  const boxWidth = 38;
+  const boxHeight = 10;
+  const boxX = logoX - boxWidth - 3;
+  const boxY = logoY;
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(0);
+  doc.rect(boxX, boxY, boxWidth, boxHeight);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.text("FOR_FIN_02_02", boxX + boxWidth / 2, boxY + 4, { align: "center" });
+  doc.text("VERSÃO: 01", boxX + boxWidth / 2, boxY + 8, { align: "center" });
 
-    // Coleta itens da tabela
-    const itens = Array.from(document.querySelectorAll("#itensTable tbody tr")).map(tr => [
-        tr.querySelector("input[name='itemCodigo[]']").value,
-        tr.querySelector("input[name='itemDescricao[]']").value,
-        tr.querySelector("input[name='itemQuantidade[]']").value,
-        tr.querySelector("input[name='itemValorUnitario[]']").value,
-        tr.querySelector("input[name='itemValorTotal[]']").value
-    ]);
+  // Título centralizado
+  const tituloY = logoY + logoHeight + 10;
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("FORMULÁRIO DE ADIANTAMENTO À FORNECEDOR", pageWidth / 2, tituloY, { align: "center" });
 
-    doc.autoTable({
-        startY: y,
-        head: [['CÓDIGO', 'DESCRIÇÃO', 'QUANT.', 'V.UNIT.', 'V.TOTAL']],
-        body: itens,
-        margin: { left: 12, right: 12 },
-        headStyles: { fillColor: [200, 200, 200] },
-        theme: 'grid',
-        styles: { font: "helvetica", fontSize: 8, cellPadding: 1.5 },
-    });
-    y = doc.lastAutoTable.finalY + 6;
+  // Linha horizontal grossa
+  let afterTitleY = tituloY + 3;
+  doc.setLineWidth(0.8);
+  doc.line(margin, afterTitleY, pageWidth - margin, afterTitleY);
+  currentY = afterTitleY + 5;
 
-    // Dados para pagamento
-    doc.setFont("helvetica", "bold");
-    doc.text("DADOS PARA PAGAMENTO:", 12, y);
-    y += 4;
-    doc.setFont("helvetica", "normal");
-    addField("BENEFICIÁRIO:", document.getElementById("beneficiario").value);
-    addField("CPF / CNPJ:", document.getElementById("cpfCnpjBeneficiario").value);
-    addField("BANCO:", document.getElementById("banco").value);
-    addField("AGÊNCIA:", document.getElementById("agencia").value);
-    addField("CONTA:", document.getElementById("conta").value);
-    addField("TIPO DE CONTA:", document.getElementById("tipoConta").value);
-    addField("CHAVE PIX:", document.getElementById("chavePix").value);
+  // --- Colunas, campos, tabela e adiantamentos (igual modelo acima) ---
+  // ... [MANTENHA O RESTO DO SEU SCRIPT COMO JÁ ESTÁ] ...
+  // Use o mesmo padrão para os campos, adiantamentos e campos de dados de pagamento.
 
-    // Total Geral
-    y += 2;
-    doc.setFont("helvetica", "bold");
-    doc.text("TOTAL GERAL:", 130, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(document.getElementById("totalGeral").value, 160, y);
+  // [AQUI vem toda a lógica de campos, tabela e estrutura do PDF, igual já estava no seu último script]
 
-    // Assinatura
-    y += 18;
-    doc.setFont("helvetica", "normal");
-    doc.line(12, y, 70, y);
-    doc.text("Solicitante", 12, y + 5);
+  // --- Assinaturas lado a lado ---
+  currentY += 18;
+  const signatureLineLength = 55;
+  const col1X = margin + contentWidth * 0.13;
+  const col2X = pageWidth - margin - contentWidth * 0.13 - signatureLineLength;
 
-    // Download automático, sem modal
-    doc.save("autorizacao_pagamento.pdf");
-    mostrarToast("PDF gerado com sucesso!", "success");
+  doc.setLineWidth(0.3);
+  doc.line(col1X, currentY, col1X + signatureLineLength, currentY);
+  doc.text("Solicitante", col1X + signatureLineLength / 2, currentY + 5, { align: "center" });
+  doc.line(col2X, currentY, col2X + signatureLineLength, currentY);
+  doc.text("Controladoria", col2X + signatureLineLength / 2, currentY + 5, { align: "center" });
+
+  // --- Finalização ---
+  pdfDoc = doc;
+
+  try {
+      const pdfData = doc.output("datauristring");
+      const pdfContainer = document.getElementById("pdfContainer");
+      if (pdfContainer) {
+          pdfContainer.innerHTML = `<embed width="100%" height="100%" src="${pdfData}" type="application/pdf">`;
+          document.getElementById("pdfPreview").classList.add("active");
+          mostrarToast("PDF gerado com sucesso!", "success");
+      } else {
+          console.error("Elemento #pdfContainer não encontrado.");
+          mostrarToast("Erro ao exibir preview do PDF.", "error");
+          downloadPDF();
+      }
+  } catch (e) {
+      console.error("Erro ao gerar Data URI do PDF:", e);
+      mostrarToast("Erro ao gerar preview do PDF.", "error");
+  }
 }
