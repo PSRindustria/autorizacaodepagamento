@@ -347,7 +347,7 @@ async function gerarPDF() {
   doc.setFont("helvetica", "normal"); doc.text(dados.solicitante, margin + 22, currentY + 19);
 
   doc.setFont("helvetica", "bold"); doc.text("DEPARTAMENTO:", margin, currentY + 24);
-  doc.setFont("helvetica", "normal"); doc.text(dados.departamento, margin + 22, currentY + 24);
+  doc.setFont("helvetica", "normal"); doc.text(dados.departamento, margin + 30, currentY + 24);
 
   let direitaY = currentY;
   let direitaX = pageWidth / 2 + 2;
@@ -417,7 +417,7 @@ async function gerarPDF() {
   doc.text("R$ " + (dados.totalGeral || "0,00"), pageWidth - margin - 20, currentY + 30);
 
   // --- Assinaturas
-  let assinaturaY = currentY + 50;
+  let assinaturaY = currentY + 75;
   if (assinaturaY > 255) assinaturaY = 255;
 
   doc.setFont("helvetica", "normal");
