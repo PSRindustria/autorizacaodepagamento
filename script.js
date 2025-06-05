@@ -25,22 +25,56 @@ document.addEventListener("DOMContentLoaded", function () {
       document.body.appendChild(container);
   }
 
-  if (!document.getElementById("pdfPreview")) {
-      const modal = document.createElement("div");
-      modal.id = "pdfPreview";
-      modal.className = "modal-overlay";
-      modal.innerHTML = `
-          <div class="modal-content" style="width: 80%; height: 80%; background: white; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative;">
-              <button id="closePdfPreview" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 16px; line-height: 25px; text-align: center;">×</button>
-              <div id="pdfContainer" style="width: 100%; height: calc(100% - 40px); margin-top: 30px;"></div>
-              <button id="downloadPdfBtn" style="position: absolute; bottom: 10px; right: 10px; padding: 8px 15px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer;">Baixar PDF</button>
-          </div>
-      `;
-      document.body.appendChild(modal);
+if (!document.getElementById("pdfPreview")) {
+    const modal = document.createElement("div");
+    modal.id = "pdfPreview";
+    modal.className = "modal-overlay";
+    modal.style.display = "none";
+    modal.innerHTML = `
+        <div class="modal-content" style="width: 80%; height: 80%; background: white; padding: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative;">
+            <button id="closePdfPreview" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 16px; line-height: 25px; text-align: center;">×</button>
+            <div id="pdfContainer" style="width: 100%; height: calc(100% - 40px); margin-top: 30px;"></div>
+            <button id="downloadPdfBtn" style="position: absolute; bottom: 10px; right: 10px; padding: 8px 15px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer;">Baixar PDF</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+      const style = document.createElement('style');
+    style.textContent = `
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 999;
+        }
+        .modal-overlay.active {
+            display: flex !important;
+        }
+        .toast {
+            background-color: #333;
+            color: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            min-width: 250px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast.success { background-color: #28a745; }
+        .toast.error { background-color: #dc3545; }
+        .toast.warning { background-color: #ffc107; color: #333; }
+        .toast.info { background-color: #17a2b8; }
+    `;
+    document.head.appendChild(style);
 
-      document.getElementById("closePdfPreview").addEventListener("click", fecharPreviewPDF);
-      document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
-  }
+    document.getElementById("closePdfPreview").addEventListener("click", fecharPreviewPDF);
+    document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
+}
 });
 
 // Máscara para valores e CNPJ/CPF
@@ -276,12 +310,14 @@ async function gerarPDF() {
   let currentY = margin;
 
   // Logo centralizada
-  const logoBase64 = await loadImageAsBase64("https://i.postimg.cc/v8nRpXB7/logo.png");
-  const logoWidth = 50;
-  const logoHeight = 13;
-  const logoX = (pageWidth - logoWidth) / 2;
-  doc.addImage(logoBase64, 'PNG', logoX, currentY, logoWidth, logoHeight);
-  currentY += logoHeight + 2;
+  const logoUrl = "https://i.postimg.cc/v8nRpXB7/logo.png";
+  const logoWidth = 175;  // ajuste se preferir menor
+  const logoHeight = 16;
+  const logoX = pageWidth - margin - logoWidth;
+  const logoY = currentY;
+  const logoBase64 = await loadImageAsBase64(logoUrl);
+  doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight);
+  currentY += logoHeight + 5;
 
   // Título e caixa de versão
   doc.setFontSize(12);
@@ -400,7 +436,9 @@ async function gerarPDF() {
       const pdfContainer = document.getElementById("pdfContainer");
       if (pdfContainer) {
           pdfContainer.innerHTML = `<embed width="100%" height="100%" src="${pdfData}" type="application/pdf">`;
+          // Mostra o modal centralizado na tela
           document.getElementById("pdfPreview").classList.add("active");
+          document.getElementById("pdfPreview").style.display = "flex";
           mostrarToast("PDF gerado com sucesso!", "success");
       }
   } catch (e) {
@@ -410,9 +448,13 @@ async function gerarPDF() {
 
 // Fechar preview
 function fecharPreviewPDF() {
-  document.getElementById("pdfPreview").classList.remove("active");
-  const pdfContainer = document.getElementById("pdfContainer");
-  if(pdfContainer) pdfContainer.innerHTML = "";
+  const modal = document.getElementById("pdfPreview");
+  if(modal){
+    modal.classList.remove("active");
+    modal.style.display = "none";
+    const pdfContainer = document.getElementById("pdfContainer");
+    if(pdfContainer) pdfContainer.innerHTML = "";
+  }
 }
 
 // Download PDF
